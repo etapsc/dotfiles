@@ -1,0 +1,21 @@
+layout {
+    // Keep review editing focused in a single Neovim pane.
+    tab name="review" focus=true {
+        pane command="nvim"
+    }
+    // Side-by-side shells for notes, assistants, or review context.
+    tab name="agents" {
+        pane split_direction="vertical" {
+            pane size="50%"
+            pane size="50%"
+        }
+    }
+    // Git and inspection commands stay in a separate sparse tab.
+    tab name="git" {
+        pane split_direction="vertical" {
+            pane size="50%"
+            pane size="50%"
+        }
+    }
+}
+

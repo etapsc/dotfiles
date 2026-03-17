@@ -1,0 +1,17 @@
+layout {
+    // Plain shell workspace with at most two panes per tab.
+    tab name="shell" focus=true {
+        pane split_direction="vertical" {
+            pane size="50%"
+            pane size="50%"
+        }
+    }
+    // Secondary tab for tools that do not need a dedicated command yet.
+    tab name="tools" {
+        pane split_direction="vertical" {
+            pane size="50%"
+            pane size="50%"
+        }
+    }
+}
+

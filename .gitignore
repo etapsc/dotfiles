@@ -1,0 +1,11 @@
+.DS_Store
+*.zwc
+.zcompdump*
+
+# Secrets and keys
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials.json
