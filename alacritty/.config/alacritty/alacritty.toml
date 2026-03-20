@@ -22,3 +22,27 @@ save_to_clipboard = true
 [cursor]
 style = { shape = "Block", blinking = "Off" }
 
+[[keyboard.bindings]]
+key = "Left"
+mods = "Alt"
+chars = "\u001b[1;3D"
+
+[[keyboard.bindings]]
+key = "Right"
+mods = "Alt"
+chars = "\u001b[1;3C"
+
+[[keyboard.bindings]]
+key = "Back"
+mods = "Alt"
+chars = "\u001b\u007f"
+
+[[keyboard.bindings]]
+key = "Back"
+mods = "Command"
+chars = "\u001b\u007f"
+
+[[keyboard.bindings]]
+key = "N"
+mods = "Command"
+action = "CreateNewWindow"

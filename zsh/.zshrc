@@ -98,12 +98,20 @@ bindkey '^[OC' forward-char
 
 bindkey '^[b' backward-word
 bindkey '^[f' forward-word
+bindkey '^[^H' backward-kill-word
+bindkey '^[^?' backward-kill-word
+[[ -n "${terminfo[kLFT3]-}" ]] && bindkey "${terminfo[kLFT3]}" backward-word
+[[ -n "${terminfo[kRIT3]-}" ]] && bindkey "${terminfo[kRIT3]}" forward-word
+[[ -n "${terminfo[kLFT5]-}" ]] && bindkey "${terminfo[kLFT5]}" backward-word
+[[ -n "${terminfo[kRIT5]-}" ]] && bindkey "${terminfo[kRIT5]}" forward-word
 bindkey '^[[1;5D' backward-word
 bindkey '^[[1;5C' forward-word
 bindkey '^[[5D' backward-word
 bindkey '^[[5C' forward-word
 bindkey '^[[1;3D' backward-word
 bindkey '^[[1;3C' forward-word
+bindkey '^[[1;9D' backward-word
+bindkey '^[[1;9C' forward-word
 
 # Aliases
 alias l='ls -lah'

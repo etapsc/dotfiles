@@ -9,3 +9,4 @@
 *.key
 *.p12
 credentials.json
+zellij/.config/zellij/layouts/projects

@@ -1,21 +1,25 @@
 layout {
-    // Parallel shell panes for agent or assistant work in the current project.
-    tab name="agents" focus=true {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
         }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    // Parallel shell panes for agent or assistant work in the current project.
+    tab name="agents" focus=true split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
     // The code tab stays single-pane so editor restores are predictable.
     tab name="code" {
         pane command="nvim"
     }
     // General-purpose shells for ad hoc commands, logs, and git work.
-    tab name="shell" {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
-        }
+    tab name="shell" split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
 }
-

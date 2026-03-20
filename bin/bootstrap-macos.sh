@@ -71,7 +71,7 @@ backup_if_exists "$HOME/.config/zellij/layouts"
 backup_if_exists "$HOME/.config/zsh/plugins"
 
 cd "$repo_root"
-stow zsh zellij alacritty starship
+stow -t "$HOME" zsh zellij alacritty starship
 
 if [[ -d "$backup_dir" ]]; then
   log "old configs backed up to $backup_dir"

@@ -47,6 +47,34 @@ check_symlink() {
   fi
 }
 
+check_layout_ui() {
+  local path="$1"
+  if [[ ! -r "$path" ]]; then
+    printf 'MISS layout  %s\n' "$path"
+    return
+  fi
+
+  local has_template=0
+  local has_tab_bar=0
+  local has_status_bar=0
+
+  if rg -q 'default_tab_template' "$path"; then
+    has_template=1
+  fi
+  if rg -q 'plugin location="zellij:tab-bar"' "$path"; then
+    has_tab_bar=1
+  fi
+  if rg -q 'plugin location="zellij:status-bar"' "$path"; then
+    has_status_bar=1
+  fi
+
+  if [[ $has_template -eq 1 && $has_tab_bar -eq 1 && $has_status_bar -eq 1 ]]; then
+    printf 'OK   layout  %s includes tab/status UI\n' "$path"
+  else
+    printf 'WARN layout  %s missing tab/status UI wiring\n' "$path"
+  fi
+}
+
 printf 'repo: %s\n' "$repo_root"
 
 check_binary zsh '--version'
@@ -64,6 +92,10 @@ check_symlink "$HOME/.config/zellij/config.kdl"
 check_symlink "$HOME/.config/zellij/layouts/dev.kdl"
 check_symlink "$HOME/.config/zellij/layouts/shell.kdl"
 check_symlink "$HOME/.config/zellij/layouts/review.kdl"
+
+check_layout_ui "$repo_root/zellij/.config/zellij/layouts/dev.kdl"
+check_layout_ui "$repo_root/zellij/.config/zellij/layouts/shell.kdl"
+check_layout_ui "$repo_root/zellij/.config/zellij/layouts/review.kdl"
 
 autosuggest_path="$(plugin_path \
   "$HOME/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \

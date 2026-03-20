@@ -62,6 +62,8 @@ Generate a project-specific layout with:
 zellij -l ~/.config/zellij/layouts/projects/bridge.kdl
 ```
 
+Generated project layouts set the Zellij session name to the layout name and reattach if that session already exists.
+
 Use `--force` to overwrite an existing layout.
 
 ## Uninstall

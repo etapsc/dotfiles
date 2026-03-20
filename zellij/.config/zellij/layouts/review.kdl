@@ -1,21 +1,25 @@
 layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
     // Keep review editing focused in a single Neovim pane.
     tab name="review" focus=true {
         pane command="nvim"
     }
     // Side-by-side shells for notes, assistants, or review context.
-    tab name="agents" {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
-        }
+    tab name="agents" split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
     // Git and inspection commands stay in a separate sparse tab.
-    tab name="git" {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
-        }
+    tab name="git" split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
 }
-

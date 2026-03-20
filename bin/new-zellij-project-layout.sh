@@ -61,24 +61,30 @@ cat >"$target_file" <<EOF
 // created: $timestamp
 layout {
     cwd "$project_dir"
-    tab name="agents" focus=true {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
         }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="agents" focus=true split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
     tab name="code" {
         pane command="nvim"
     }
-    tab name="shell" {
-        pane split_direction="vertical" {
-            pane size="50%"
-            pane size="50%"
-        }
+    tab name="shell" split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
 }
+session_name "$name"
+attach_to_session true
 EOF
 
 printf 'created: %s\n' "$target_file"
 printf 'use with: zellij -l ~/.config/zellij/layouts/projects/%s.kdl\n' "$name"
-
