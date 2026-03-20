@@ -69,7 +69,10 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 bindkey -e
 
 autoload -Uz select-word-style up-line-or-beginning-search down-line-or-beginning-search
-select-word-style shell
+# Use bash-style word movement so navigation and deletion stop on common code and
+# path separators like / . - _ @ and quotes rather than only on whitespace.
+WORDCHARS=''
+select-word-style bash
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
 
@@ -100,6 +103,8 @@ bindkey '^[b' backward-word
 bindkey '^[f' forward-word
 bindkey '^[^H' backward-kill-word
 bindkey '^[^?' backward-kill-word
+bindkey '^[[3;3~' kill-word
+bindkey '^[[3;5~' kill-word
 [[ -n "${terminfo[kLFT3]-}" ]] && bindkey "${terminfo[kLFT3]}" backward-word
 [[ -n "${terminfo[kRIT3]-}" ]] && bindkey "${terminfo[kRIT3]}" forward-word
 [[ -n "${terminfo[kLFT5]-}" ]] && bindkey "${terminfo[kLFT5]}" backward-word
@@ -114,6 +119,12 @@ bindkey '^[[1;9D' backward-word
 bindkey '^[[1;9C' forward-word
 
 # Aliases
+if ls --color=auto -d . >/dev/null 2>&1; then
+  alias ls='ls --color=auto'
+elif ls -G -d . >/dev/null 2>&1; then
+  alias ls='ls -G'
+fi
+
 alias l='ls -lah'
 alias la='ls -lAh'
 alias ll='ls -lh'

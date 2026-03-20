@@ -39,6 +39,11 @@ chars = "\u001b\u007f"
 
 [[keyboard.bindings]]
 key = "Back"
+mods = "Control"
+chars = "\u001b\u007f"
+
+[[keyboard.bindings]]
+key = "Back"
 mods = "Command"
 chars = "\u001b\u007f"
 
