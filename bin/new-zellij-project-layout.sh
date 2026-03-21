@@ -63,11 +63,11 @@ layout {
     cwd "$project_dir"
     default_tab_template {
         pane size=1 borderless=true {
-            plugin location="zellij:tab-bar"
+            plugin location="tab-bar"
         }
         children
-        pane size=2 borderless=true {
-            plugin location="zellij:status-bar"
+        pane size=1 borderless=true {
+            plugin location="status-bar"
         }
     }
     tab name="agents" focus=true split_direction="vertical" {

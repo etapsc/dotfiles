@@ -4,8 +4,8 @@ layout {
             plugin location="zellij:tab-bar"
         }
         children
-        pane size=2 borderless=true {
-            plugin location="zellij:status-bar"
+        pane size=1 borderless=true {
+            plugin location="status-bar"
         }
     }
     // Plain shell workspace with at most two panes per tab.
