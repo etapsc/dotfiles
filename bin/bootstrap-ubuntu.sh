@@ -167,7 +167,7 @@ if [[ "$SHELL" != */zsh ]]; then
     echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
   fi
   log "setting zsh as default shell"
-  chsh -s "$zsh_path"
+  sudo chsh -s "$zsh_path" "$(whoami)"
 fi
 
 # --- Post-install notes ---
