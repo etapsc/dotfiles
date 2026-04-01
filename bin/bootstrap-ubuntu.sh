@@ -110,7 +110,7 @@ if ! command -v eza >/dev/null 2>&1; then
   sudo mkdir -p /etc/apt/keyrings
   curl -fsSL https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
     | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-  echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+  echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
     | sudo tee /etc/apt/sources.list.d/gierens.list >/dev/null
   sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
   sudo apt-get update
@@ -152,7 +152,7 @@ backup_if_exists "$HOME/.config/zellij/layouts"
 backup_if_exists "$HOME/.config/zsh/plugins"
 
 cd "$repo_root"
-stow zsh zellij alacritty starship
+stow -t "$HOME" zsh zellij alacritty starship
 
 if [[ -d "$backup_dir" ]]; then
   log "old configs backed up to $backup_dir"

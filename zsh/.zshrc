@@ -186,3 +186,5 @@ if command -v starship >/dev/null 2>&1; then
 else
   PROMPT='%~ %# '
 fi
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"

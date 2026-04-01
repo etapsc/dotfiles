@@ -61,10 +61,10 @@ check_layout_ui() {
   if rg -q 'default_tab_template' "$path"; then
     has_template=1
   fi
-  if rg -q 'plugin location="zellij:tab-bar"' "$path"; then
+  if rg -q 'plugin location="(zellij:)?tab-bar"' "$path"; then
     has_tab_bar=1
   fi
-  if rg -q 'plugin location="zellij:status-bar"' "$path"; then
+  if rg -q 'plugin location="(zellij:)?status-bar"' "$path"; then
     has_status_bar=1
   fi
 
