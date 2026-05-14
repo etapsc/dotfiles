@@ -188,3 +188,8 @@ else
 fi
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
+
+# opencode
+export PATH=/home/alexey/.opencode/bin:$PATH
+export PATH=/home/alexey/apps:$PATH
+

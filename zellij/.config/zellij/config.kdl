@@ -286,7 +286,8 @@ web_client {
 // Default: normal
 // 
 // default_mode "locked"
- 
+theme "catppuccin-macchiato"
+
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
 // 
