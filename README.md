@@ -38,7 +38,7 @@ Older or slower Macs, especially unsupported Monterey installs:
 exec zsh
 ```
 
-Minimal mode installs only zsh, Stow, Zellij, Starship, zsh plugins, and a few shell tools. It skips `brew update`, Alacritty, and the Nerd Font cask so one slow or unsupported GUI package does not block a usable terminal setup.
+Minimal mode installs only zsh, Stow, Zellij, Starship, zsh plugins, and a few shell tools. It skips `brew update`, Alacritty, and the Nerd Font cask so one slow or unsupported GUI package does not block a usable terminal setup. Zellij is installed from its official prebuilt `zellij-no-web` macOS release instead of Homebrew to avoid slow source builds on older macOS versions.
 
 If you had Oh My Zsh or Powerlevel10k, the bootstrap backs up your old `~/.zshrc` to `~/.dotfiles-backup/<timestamp>/` and tells you when `~/.oh-my-zsh` and `~/.p10k.zsh` are safe to remove.
 

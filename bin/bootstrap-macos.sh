@@ -52,6 +52,40 @@ install_formulae() {
   done
 }
 
+install_zellij_release() {
+  if command -v zellij >/dev/null 2>&1; then
+    log "zellij already installed"
+    return 0
+  fi
+
+  local arch
+  case "$(uname -m)" in
+    x86_64)
+      arch="x86_64"
+      ;;
+    arm64|aarch64)
+      arch="aarch64"
+      ;;
+    *)
+      printf 'error: unsupported macOS architecture for Zellij release: %s\n' "$(uname -m)" >&2
+      return 1
+      ;;
+  esac
+
+  local url
+  local tmp
+  url="https://github.com/zellij-org/zellij/releases/latest/download/zellij-no-web-${arch}-apple-darwin.tar.gz"
+  tmp="$(mktemp -d)"
+
+  log "installing Zellij prebuilt release for ${arch}-apple-darwin"
+  curl -fL "$url" -o "$tmp/zellij.tar.gz"
+  tar -xzf "$tmp/zellij.tar.gz" -C "$tmp"
+
+  mkdir -p "$HOME/.local/bin"
+  install -m 755 "$tmp/zellij" "$HOME/.local/bin/zellij"
+  rm -rf "$tmp"
+}
+
 minimal=0
 
 while [[ $# -gt 0 ]]; do
@@ -86,13 +120,13 @@ if [[ "$minimal" -eq 1 ]]; then
   install_formulae \
     zsh \
     stow \
-    zellij \
     starship \
     zsh-autosuggestions \
     zsh-syntax-highlighting \
     ripgrep \
     fd \
     fzf
+  install_zellij_release
 else
   log "updating Homebrew"
   brew update
