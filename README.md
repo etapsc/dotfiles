@@ -31,6 +31,15 @@ macOS (requires [Homebrew](https://brew.sh)):
 exec zsh
 ```
 
+Older or slower Macs, especially unsupported Monterey installs:
+
+```bash
+./bin/bootstrap-macos.sh --minimal
+exec zsh
+```
+
+Minimal mode installs only zsh, Stow, Zellij, Starship, zsh plugins, and a few shell tools. It skips `brew update`, Alacritty, and the Nerd Font cask so one slow or unsupported GUI package does not block a usable terminal setup.
+
 If you had Oh My Zsh or Powerlevel10k, the bootstrap backs up your old `~/.zshrc` to `~/.dotfiles-backup/<timestamp>/` and tells you when `~/.oh-my-zsh` and `~/.p10k.zsh` are safe to remove.
 
 ### 3. Verify
@@ -40,6 +49,12 @@ If you had Oh My Zsh or Powerlevel10k, the bootstrap backs up your old `~/.zshrc
 ```
 
 This checks that all binaries are installed, symlinks point into the repo, and plugin files exist at expected paths.
+
+For a minimal macOS install, use:
+
+```bash
+./bin/check-health.sh --minimal
+```
 
 ## Zellij Layouts
 

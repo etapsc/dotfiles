@@ -1,0 +1,43 @@
+{
+  "schema_version": "context.v1",
+  "updated": "2026-06-07",
+  "project": {
+    "name": "dotfiles"
+  },
+  "workspace": {
+    "topology": "single-repo",
+    "control_repo": ".",
+    "repos": []
+  },
+  "feature_status": [],
+  "workspace_feedback": [],
+  "handoff": {
+    "stopped_at": "Added minimal macOS bootstrap path for older Monterey Macs",
+    "next_immediate": "Test ./bin/bootstrap-macos.sh --minimal on the target MacBook Air, then run ./bin/check-health.sh --minimal",
+    "watch_out": "Homebrew on Monterey may be slow or unsupported; minimal mode skips brew update, Alacritty, and the Nerd Font cask"
+  },
+  "next_slice": {
+    "slice_id": "",
+    "goal": "",
+    "features": [],
+    "acceptance_tests": []
+  },
+  "commands_to_run": {
+    "test": "",
+    "lint": "",
+    "typecheck": "",
+    "dev": ""
+  },
+  "repo_commands": {},
+  "repo_state": [
+    {
+      "date": "2026-06-07",
+      "summary": "bin/bootstrap-macos.sh supports --minimal for shell/Zellij essentials; bin/check-health.sh supports matching --minimal verification; README documents both commands."
+    }
+  ],
+  "recent_decisions": [],
+  "blockers": [],
+  "discrepancies": [],
+  "gate_history": [],
+  "eval_history": []
+}

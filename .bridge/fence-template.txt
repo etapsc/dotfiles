@@ -1,0 +1,108 @@
+BRIDGE per-slice verification fence / marker spec
+=================================================
+
+This is a SHIPPED REFERENCE DOC (not executed). It defines the exact markers,
+ownership, and idempotent-rewrite rule that the BRIDGE agents follow when they
+write per-slice scripts under tests/slices/. It is pack-agnostic and
+byte-identical across the claude-code and codex packs and the BRIDGE repo root.
+
+Per-slice files live at:
+  tests/slices/<slice>-verify.sh   build / format / lint / static checks
+  tests/slices/<slice>-smoke.sh    slice behavioral tests
+  tests/slices/<slice>-eval.sh     actual user-facing scenario commands
+                                   (NOT a re-run of the project test framework)
+
+<slice> is the literal slice id (e.g. S37).
+
+
+1. Co-ownership of *-verify.sh and *-smoke.sh
+---------------------------------------------
+These two files are CO-OWNED. Producers (bridge-coder / bridge-debugger) own one
+fenced section; the gate (bridge-gate-audit) owns a distinct fenced section. The
+<slice>-eval.sh file is single-owner (bridge-eval-generate) and uses its own
+producer-style fence for idempotent rewrite.
+
+
+2. Marker strings (EXACT -- emit verbatim)
+------------------------------------------
+Producer-owned section (seeded by bridge-coder / bridge-debugger):
+
+# >>> BRIDGE slice <slice> producer (managed) >>>
+…producer commands…
+# <<< BRIDGE slice <slice> producer (managed) <<<
+
+Gate-owned section (appended by bridge-gate-audit):
+
+# >>> BRIDGE slice <slice> gate (managed) >>>
+…gate automatable checks…
+# <<< BRIDGE slice <slice> gate (managed) <<<
+
+Eval-owned section (written by bridge-eval-generate, in <slice>-eval.sh):
+
+# >>> BRIDGE slice <slice> eval (managed) >>>
+…actual user-facing scenario commands…
+# <<< BRIDGE slice <slice> eval (managed) <<<
+
+The producer and gate marker pairs are DISTINCT, so each owner rewrites ONLY its
+own block and never touches the other's. This is the multi-producer collision
+mitigation (R18).
+
+
+3. File skeleton each owner writes into
+---------------------------------------
+A <slice>-verify.sh (and -smoke.sh, -eval.sh) file is created with this fixed
+header by whichever owner writes first, then the fenced block(s) live below it:
+
+#!/usr/bin/env bash
+set -uo pipefail
+# BRIDGE per-slice <verify|smoke|eval> script for <slice>. Managed in fenced blocks.
+# Producer block: bridge-coder/bridge-debugger. Gate block: bridge-gate-audit.
+# Re-runs of those agents rewrite their own block in place (no duplication).
+cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+source .bridge/lib/runner-lib.sh
+
+# >>> BRIDGE slice <slice> producer (managed) >>>
+# (seeded by coder/debugger; empty until first seed)
+# <<< BRIDGE slice <slice> producer (managed) <<<
+
+# >>> BRIDGE slice <slice> gate (managed) >>>
+# (appended by gate; empty until first gate run)
+# <<< BRIDGE slice <slice> gate (managed) <<<
+
+bridge_summary
+
+The header + bridge_summary trailer are owned by the file creator and are not
+re-touched by block rewrites.
+
+
+4. Idempotent rewrite-in-place rule (R18)
+------------------------------------------
+- An owner that finds its OWN markers already present rewrites ONLY the lines
+  between its markers; it leaves the file's header, the other owner's block, and
+  the trailer byte-for-byte unchanged.
+- If the file does not yet exist, the owner creates it from the section-3
+  skeleton, then fills its block.
+- If the file exists but the owner's markers are absent (e.g. gate runs on a
+  file that only has the producer block), the owner inserts its fenced block
+  once, immediately after the other recognized block, then fills it.
+- Re-running an owner NEVER appends a duplicate block and NEVER duplicates
+  commands.
+
+
+5. Parallel-slice isolation (R18)
+---------------------------------
+One slice owns exactly one file set: <slice>-verify.sh, <slice>-smoke.sh,
+<slice>-eval.sh. Distinct slices write distinct filenames, so two parallel
+slices never write the same file. Collision is only possible WITHIN one slice's
+file between the two owners, which the distinct markers + in-place rewrite
+resolve. No file locking is required: cross-slice files are disjoint and
+intra-slice owners run sequentially in the BRIDGE flow (coder seeds, gate
+appends), never concurrently.
+
+
+6. Eval file content rule
+-------------------------
+<slice>-eval.sh MUST contain the ACTUAL user-facing scenario commands (drive the
+product as an operator would and assert observable outcomes) and MUST NOT merely
+re-run the project test framework (bash test.sh / unit / integration) -- that is
+the job of verify/smoke.

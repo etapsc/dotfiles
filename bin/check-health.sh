@@ -4,6 +4,16 @@ set -euo pipefail
 script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 repo_root="$(CDPATH= cd -- "$script_dir/.." && pwd -P)"
 
+usage() {
+  cat <<'EOF'
+Usage: check-health.sh [--minimal]
+
+Options:
+  --minimal   Check only shell/Zellij essentials used by macOS minimal bootstrap.
+  -h, --help  Show this help.
+EOF
+}
+
 plugin_path() {
   local candidate
   for candidate in "$@"; do
@@ -75,23 +85,49 @@ check_layout_ui() {
   fi
 }
 
+minimal=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --minimal)
+      minimal=1
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'error: unknown option: %s\n\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
 printf 'repo: %s\n' "$repo_root"
 
 check_binary zsh '--version'
 check_binary zellij '--version'
-check_binary nvim '--version'
 check_binary starship '--version'
-check_binary alacritty '--version'
-check_binary claude '--version'
-check_binary codex '--version'
+
+if [[ "$minimal" -eq 0 ]]; then
+  check_binary nvim '--version'
+  check_binary alacritty '--version'
+  check_binary claude '--version'
+  check_binary codex '--version'
+fi
 
 check_symlink "$HOME/.zshrc"
-check_symlink "$HOME/.config/alacritty/alacritty.toml"
 check_symlink "$HOME/.config/starship.toml"
 check_symlink "$HOME/.config/zellij/config.kdl"
 check_symlink "$HOME/.config/zellij/layouts/dev.kdl"
 check_symlink "$HOME/.config/zellij/layouts/shell.kdl"
 check_symlink "$HOME/.config/zellij/layouts/review.kdl"
+
+if [[ "$minimal" -eq 0 ]]; then
+  check_symlink "$HOME/.config/alacritty/alacritty.toml"
+fi
 
 check_layout_ui "$repo_root/zellij/.config/zellij/layouts/dev.kdl"
 check_layout_ui "$repo_root/zellij/.config/zellij/layouts/shell.kdl"
