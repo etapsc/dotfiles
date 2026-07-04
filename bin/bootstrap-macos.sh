@@ -167,9 +167,9 @@ fi
 cd "$repo_root"
 
 if [[ "$minimal" -eq 1 ]]; then
-  stow -t "$HOME" zsh zellij starship
+  stow -t "$HOME" zsh zellij starship scripts
 else
-  stow -t "$HOME" zsh zellij alacritty starship
+  stow -t "$HOME" zsh zellij alacritty starship scripts
 fi
 
 if [[ -d "$backup_dir" ]]; then

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# theme-toggle — switch Alacritty + Zellij between Catppuccin flavours in one shot.
+#
+# Usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|status]
+#   no argument  toggle between $LIGHT and $DARK
+#   status       print the currently active flavour
+#
+# Running apps pick the change up live: Alacritty via live_config_reload,
+# Zellij (>= 0.42) via its config watcher.
+set -euo pipefail
+
+LIGHT="latte"
+DARK="macchiato"
+
+alacritty_cfg="$HOME/.config/alacritty/alacritty.toml"
+zellij_cfg="$HOME/.config/zellij/config.kdl"
+
+# Follow the stow symlink and edit the repo file in place; sed -i on the
+# symlink itself would replace it with a regular file.
+resolve() {
+  readlink -f "$1" 2>/dev/null || echo "$1"
+}
+
+sed_i() {
+  if sed --version >/dev/null 2>&1; then
+    sed -i -E "$@"
+  else
+    sed -i '' -E "$@"
+  fi
+}
+
+current() {
+  if [[ -f "$alacritty_cfg" ]]; then
+    sed -n 's|^ *"~/.config/alacritty/catppuccin-\([a-z]*\)\.toml".*|\1|p' "$alacritty_cfg" | head -1
+  elif [[ -f "$zellij_cfg" ]]; then
+    sed -n 's|^theme "catppuccin-\([a-z]*\)".*|\1|p' "$zellij_cfg" | head -1
+  fi
+}
+
+apply() {
+  local flavour="$1"
+
+  if [[ -f "$alacritty_cfg" ]]; then
+    local a
+    a="$(resolve "$alacritty_cfg")"
+    # Comment out every catppuccin import, then uncomment the target one.
+    sed_i 's|^( *)"(~/.config/alacritty/catppuccin-[a-z]+\.toml)"|\1# "\2"|' "$a"
+    sed_i "s|^( *)# *\"(~/.config/alacritty/catppuccin-${flavour}\\.toml)\"|\\1\"\\2\"|" "$a"
+  fi
+
+  if [[ -f "$zellij_cfg" ]]; then
+    sed_i "s|^theme \"[^\"]*\"|theme \"catppuccin-${flavour}\"|" "$(resolve "$zellij_cfg")"
+  fi
+
+  echo "theme: catppuccin-${flavour}"
+}
+
+case "${1:-toggle}" in
+  latte|frappe|macchiato|mocha) apply "$1" ;;
+  light)  apply "$LIGHT" ;;
+  dark)   apply "$DARK" ;;
+  status) echo "theme: catppuccin-$(current)" ;;
+  toggle)
+    if [[ "$(current)" == "$LIGHT" ]]; then apply "$DARK"; else apply "$LIGHT"; fi
+    ;;
+  *)
+    echo "usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|status]" >&2
+    exit 2
+    ;;
+esac
