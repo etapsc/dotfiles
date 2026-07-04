@@ -1,6 +1,6 @@
 {
   "schema_version": "context.v1",
-  "updated": "2026-06-07",
+  "updated": "2026-07-04",
   "project": {
     "name": "dotfiles"
   },
@@ -12,9 +12,9 @@
   "feature_status": [],
   "workspace_feedback": [],
   "handoff": {
-    "stopped_at": "Added minimal macOS bootstrap path for older Monterey Macs",
-    "next_immediate": "Test ./bin/bootstrap-macos.sh --minimal on the target MacBook Air, then run ./bin/check-health.sh --minimal",
-    "watch_out": "Homebrew on Monterey may be slow or unsupported; minimal mode skips brew update, Alacritty, and the Nerd Font cask"
+    "stopped_at": "Shipped theme-toggle (scripts stow package) for one-shot Catppuccin switching in Alacritty + Zellij; committed and pushed to main (410259a, 1f1e638)",
+    "next_immediate": "Optional cleanup: merge the duplicate compinit at zsh/.zshrc:200 (grok installer block) into the main completion block at lines 60-63 to avoid a second compinit run and stray ~/.zcompdump",
+    "watch_out": "theme-toggle edits repo-tracked configs in place, so a non-default theme (anything but latte) shows as a dirty git diff; latte is the committed default. Prior minimal-bootstrap testing on the Monterey MacBook Air may still be pending."
   },
   "next_slice": {
     "slice_id": "",
@@ -31,11 +31,19 @@
   "repo_commands": {},
   "repo_state": [
     {
+      "date": "2026-07-04",
+      "summary": "New scripts stow package installs ~/.local/bin/theme-toggle (Catppuccin latte<->macchiato toggle for Alacritty + Zellij via live config reload, explicit flavours + status supported); both bootstrap scripts stow it; zellij config normalized to a single theme line; zshrc gained grok CLI PATH/completions block."
+    },
+    {
       "date": "2026-06-07",
       "summary": "bin/bootstrap-macos.sh supports --minimal for shell/Zellij essentials; bin/check-health.sh supports matching --minimal verification; README documents both commands."
     }
   ],
-  "recent_decisions": [],
+  "recent_decisions": [
+    "2026-07-04: Theme switching is a manual toggle command, not OS-appearance- or schedule-driven (user explicitly rejected following desktop mode)",
+    "2026-07-04: User-facing commands live in the scripts stow package (scripts/.local/bin -> ~/.local/bin); repo tooling stays in bin/",
+    "2026-07-04: Font-size changes use Alacritty's built-in Cmd+= / Cmd+- / Cmd+0 bindings; no custom tooling (Zellij inherits terminal font)"
+  ],
   "blockers": [],
   "discrepancies": [],
   "gate_history": [],
