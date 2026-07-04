@@ -193,3 +193,9 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH=/home/alexey/.opencode/bin:$PATH
 export PATH=/home/alexey/apps:$PATH
 
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<
