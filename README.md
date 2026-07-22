@@ -70,7 +70,9 @@ zellij -l ~/.config/zellij/layouts/dev.kdl
 
 ### Project layouts
 
-Generate a project-specific layout with:
+Generate a project-specific layout with single-pane `claude`, `codex`, and
+`grok` tabs, a `code` tab running Neovim, and two-pane `tools` and `shell`
+tabs:
 
 ```bash
 ./bin/new-zellij-project-layout.sh bridge ~/Work/bridge

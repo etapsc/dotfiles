@@ -70,12 +70,15 @@ layout {
             plugin location="status-bar"
         }
     }
-    tab name="agents" focus=true split_direction="vertical" {
-        pane size="50%"
-        pane size="50%"
-    }
+    tab name="claude" focus=true
+    tab name="codex"
+    tab name="grok"
     tab name="code" {
         pane command="nvim"
+    }
+    tab name="tools" split_direction="vertical" {
+        pane size="50%"
+        pane size="50%"
     }
     tab name="shell" split_direction="vertical" {
         pane size="50%"
