@@ -1,6 +1,6 @@
 {
   "schema_version": "context.v1",
-  "updated": "2026-07-04",
+  "updated": "2026-08-12",
   "project": {
     "name": "dotfiles"
   },
@@ -12,9 +12,9 @@
   "feature_status": [],
   "workspace_feedback": [],
   "handoff": {
-    "stopped_at": "Shipped theme-toggle (scripts stow package) for one-shot Catppuccin switching in Alacritty + Zellij; committed and pushed to main (410259a, 1f1e638)",
-    "next_immediate": "Optional cleanup: merge the duplicate compinit at zsh/.zshrc:200 (grok installer block) into the main completion block at lines 60-63 to avoid a second compinit run and stray ~/.zcompdump",
-    "watch_out": "theme-toggle edits repo-tracked configs in place, so a non-default theme (anything but latte) shows as a dirty git diff; latte is the committed default. Prior minimal-bootstrap testing on the Monterey MacBook Air may still be pending."
+    "stopped_at": "Regenerated all 8 remaining project layouts (bridge, dotfiles, frameview, labz, lumera, lumera-arc, lumera-infra-deploy, quorum) with --force to the six-tab structure; all 9 local layouts now match the dafd99d generator. Layouts are git-ignored, so no repo diff resulted",
+    "next_immediate": "Delete stale named Zellij sessions (bridge, quorum, lumera, lumera-infra-deploy, lumera-arc, dotfiles) so regenerated layouts take effect on next launch; the duplicate-compinit cleanup in zsh/.zshrc remains optional",
+    "watch_out": "Several stale-structure Zellij sessions are LIVE and hold running processes - kill/delete deliberately, not in bulk. The Macchiato theme remains active, so the tracked Alacritty and Zellij configs intentionally show dirty diffs against the committed Latte default."
   },
   "next_slice": {
     "slice_id": "",
@@ -31,6 +31,10 @@
   "repo_commands": {},
   "repo_state": [
     {
+      "date": "2026-07-21",
+      "summary": "bin/new-zellij-project-layout.sh now generates single-pane claude, codex, and grok tabs; a code tab running nvim; and two-pane tools and shell tabs. README documents the layout. Existing local layouts require --force regeneration, and an existing named Zellij session must be deleted before the new layout structure appears."
+    },
+    {
       "date": "2026-07-04",
       "summary": "New scripts stow package installs ~/.local/bin/theme-toggle (Catppuccin latte<->macchiato toggle for Alacritty + Zellij via live config reload, explicit flavours + status supported); both bootstrap scripts stow it; zellij config normalized to a single theme line; zshrc gained grok CLI PATH/completions block."
     },
@@ -40,6 +44,7 @@
     }
   ],
   "recent_decisions": [
+    "2026-07-21: Project layout scaffolds use six role-specific tabs: claude, codex, grok, code, tools, and shell; agent tabs stay as plain shells rather than auto-launching CLIs",
     "2026-07-04: Theme switching is a manual toggle command, not OS-appearance- or schedule-driven (user explicitly rejected following desktop mode)",
     "2026-07-04: User-facing commands live in the scripts stow package (scripts/.local/bin -> ~/.local/bin); repo tooling stays in bin/",
     "2026-07-04: Font-size changes use Alacritty's built-in Cmd+= / Cmd+- / Cmd+0 bindings; no custom tooling (Zellij inherits terminal font)"
