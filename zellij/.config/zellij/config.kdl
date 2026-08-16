@@ -286,7 +286,7 @@ web_client {
 // Default: normal
 // 
 // default_mode "locked"
-theme "catppuccin-latte"
+theme "catppuccin-macchiato"
 
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
@@ -516,7 +516,7 @@ theme "catppuccin-latte"
 // The ip address the web server should listen on when it starts
 // Default: "127.0.0.1"
 // (Requires restart)
-// web_server_ip "127.0.0.1"
+// web_server_ip "0.0.0.0"
  
 // The port the web server should listen on when it starts
 // Default: 8082
