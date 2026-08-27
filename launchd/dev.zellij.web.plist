@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>dev.zellij.web</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/zellij</string>
+        <string>web</string>
+        <string>--ip</string>
+        <string>192.168.2.202</string>
+        <string>--port</string>
+        <string>8082</string>
+        <string>--cert</string>
+        <string>/Users/alexey/.certs/certificates/sleipnir.z42.work.crt</string>
+        <string>--key</string>
+        <string>/Users/alexey/.certs/certificates/sleipnir.z42.work.key</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>LANG</key>
+        <string>en_US.UTF-8</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardErrorPath</key>
+    <string>/tmp/zellij-web.err</string>
+</dict>
+</plist>
