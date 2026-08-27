@@ -268,6 +268,33 @@ load_plugins {
 }
 web_client {
     font "monospace"
+    // Catppuccin Macchiato - the web client theme is separate from
+    // zellij's `theme` option and defaults to light without this.
+    theme {
+        background 36 39 58
+        foreground 202 211 245
+        black 73 77 100
+        red 237 135 150
+        green 166 218 149
+        yellow 238 212 159
+        blue 138 173 244
+        magenta 245 189 230
+        cyan 139 213 202
+        white 184 192 224
+        bright_black 91 96 120
+        bright_red 237 135 150
+        bright_green 166 218 149
+        bright_yellow 238 212 159
+        bright_blue 138 173 244
+        bright_magenta 245 189 230
+        bright_cyan 139 213 202
+        bright_white 165 173 203
+        cursor 244 219 214
+        cursor_accent 36 39 58
+        selection_background 244 219 214
+        selection_foreground 36 39 58
+        selection_inactive_background 73 77 100
+    }
 }
  
 // Use a simplified UI without special fonts (arrow glyphs)
@@ -286,7 +313,7 @@ web_client {
 // Default: normal
 // 
 // default_mode "locked"
-theme "catppuccin-latte"
+theme "catppuccin-macchiato"
 
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
