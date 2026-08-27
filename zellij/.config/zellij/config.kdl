@@ -286,7 +286,7 @@ web_client {
 // Default: normal
 // 
 // default_mode "locked"
-theme "catppuccin-macchiato"
+theme "catppuccin-latte"
 
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
@@ -477,6 +477,7 @@ theme "catppuccin-macchiato"
 // Default: "off"
 // 
 // web_sharing "off"
+web_sharing "on"
 // A path to a certificate file to be used when setting up the web client to serve the
 // connection over HTTPs
 // 
