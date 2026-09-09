@@ -1,6 +1,6 @@
 pack=claude-code,codex
 personality=balanced
 project_name=dotfiles
-version=v2.15.0
-installed=2026-06-07
+version=v2.16.0
+installed=2026-09-03
 installer=bridge.sh

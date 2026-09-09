@@ -1,4 +1,4 @@
-# BRIDGE v2.15.0 — dotfiles
+# BRIDGE v2.16.0 — dotfiles
 
 ## Methodology
 
@@ -10,7 +10,8 @@ BRIDGE = Brainstorm → Requirements → Implementation Design → Develop → G
 2. docs/requirements.json — intent (bridge.v2 schema)
 3. docs/contracts/* — schemas/ADRs
 4. docs/conventions.md — folder taxonomy reference (what belongs in each docs/ subdir)
-5. Codebase — ultimate reality; update context if stale
+5. docs/project-knowledge.md — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived docs/project-brief.md
+6. Codebase — ultimate reality; update context if stale
 
 ## Hard Constraints
 
