@@ -504,7 +504,7 @@ theme "catppuccin-macchiato"
 // Default: "off"
 // 
 // web_sharing "off"
-web_sharing "on"
+web_sharing "off"
 // A path to a certificate file to be used when setting up the web client to serve the
 // connection over HTTPs
 // 
