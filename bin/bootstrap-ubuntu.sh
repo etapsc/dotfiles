@@ -65,7 +65,8 @@ sudo apt-get install -y \
   ripgrep \
   fd-find \
   fzf \
-  bat
+  bat \
+  jq
 
 # batcat -> bat symlink (Debian/Ubuntu naming)
 if command -v batcat >/dev/null 2>&1 && ! command -v bat >/dev/null 2>&1; then
@@ -157,6 +158,12 @@ stow -t "$HOME" zsh zellij alacritty starship scripts
 if [[ -d "$backup_dir" ]]; then
   log "old configs backed up to $backup_dir"
 fi
+
+# --- Agent status lines ---
+
+log "installing agent status lines"
+"$repo_root/bin/setup-agent-statusline.sh" \
+  || log "NOTE: agent status lines need attention (see above); re-run bin/setup-agent-statusline.sh"
 
 # --- Set default shell ---
 

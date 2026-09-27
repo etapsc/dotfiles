@@ -143,13 +143,50 @@ The command lives in the `scripts` stow package (`scripts/.local/bin` →
 `releases.openai.com` and runs `codex update` when that version is newer
 than the one installed.
 
+## Agent status lines
+
+Claude Code, Grok, and Codex each show a custom status line. One command sets
+them all up on a machine, and both bootstrap scripts run it:
+
+```bash
+./bin/setup-agent-statusline.sh           # link scripts, set config keys
+./bin/setup-agent-statusline.sh --check   # report only (also run by check-health.sh)
+```
+
+| CLI | Script (stow package `agent-cli`) | Config key the command sets |
+|---|---|---|
+| Claude Code | `~/.claude/statusline.sh` | `~/.claude/settings.json` → `statusLine` |
+| Grok | `~/.grok/statusline.sh` | `~/.grok/config.toml` → `[ui.status_line]` |
+| Codex | none; built-in items | `~/.codex/config.toml` → `[tui] status_line`, `status_line_use_colors` |
+
+Edit the scripts in `agent-cli/`; the links make every change live. To change
+the Codex items or the Grok refresh interval, edit the values at the top of
+`bin/setup-agent-statusline.sh` and re-run it.
+
+`agent-cli` is stowed with `--no-folding`, so `~/.claude` and `~/.grok` stay
+real directories even on a machine where they do not exist yet. Plain `stow`
+would make them symlinks into this repo, and the CLIs would then write
+credentials and history here. An existing script that differs from the repo
+copy is moved to `~/.dotfiles-backup/<timestamp>/` first.
+
+The configs themselves are not stow-managed, because they also hold
+permissions, trusted projects, plugin state, and `theme-toggle`'s theme keys.
+The command changes only the keys above, validates each file as JSON or TOML
+before replacing it, and leaves a file alone when it already matches or when
+the edit would not parse. Codex and Grok write their `config.toml` on first
+run, so on a new machine start each once, then re-run the command.
+
+Requirements: `stow`, `jq`, and `python3` 3.11+ (for TOML validation). The
+scripts themselves need `git`, `python3`, and, for Grok, `jq`; `gh` is optional
+and adds the PR number.
+
 ## Uninstall
 
 Remove symlinks and restore backed-up configs:
 
 ```bash
 cd ~/dotfiles
-stow -D zsh zellij alacritty starship
+stow -D zsh zellij alacritty starship agent-cli
 # then restore from ~/.dotfiles-backup/<timestamp>/ if needed
 ```
 

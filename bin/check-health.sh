@@ -129,6 +129,8 @@ if [[ "$minimal" -eq 0 ]]; then
   check_symlink "$HOME/.config/alacritty/alacritty.toml"
 fi
 
+"$script_dir/setup-agent-statusline.sh" --check || true
+
 check_layout_ui "$repo_root/zellij/.config/zellij/layouts/dev.kdl"
 check_layout_ui "$repo_root/zellij/.config/zellij/layouts/shell.kdl"
 check_layout_ui "$repo_root/zellij/.config/zellij/layouts/review.kdl"

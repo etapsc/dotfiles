@@ -125,7 +125,8 @@ if [[ "$minimal" -eq 1 ]]; then
     zsh-syntax-highlighting \
     ripgrep \
     fd \
-    fzf
+    fzf \
+    jq
   install_zellij_release
 else
   log "updating Homebrew"
@@ -144,7 +145,9 @@ else
     fd \
     fzf \
     bat \
-    eza
+    eza \
+    jq \
+    python
 
   log "installing JetBrains Mono Nerd Font"
   brew install --cask font-jetbrains-mono-nerd-font
@@ -175,6 +178,12 @@ fi
 if [[ -d "$backup_dir" ]]; then
   log "old configs backed up to $backup_dir"
 fi
+
+# --- Agent status lines ---
+
+log "installing agent status lines"
+"$repo_root/bin/setup-agent-statusline.sh" \
+  || log "NOTE: agent status lines need attention (see above); re-run bin/setup-agent-statusline.sh"
 
 # --- Set default shell ---
 
