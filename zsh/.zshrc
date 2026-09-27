@@ -193,6 +193,7 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH=/home/alexey/.opencode/bin:$PATH
 export PATH=/home/alexey/apps:$PATH
 
+setopt INTERACTIVE_COMMENTS
 
 # >>> grok installer >>>
 export PATH="$HOME/.grok/bin:$PATH"

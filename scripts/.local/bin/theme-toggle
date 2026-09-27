@@ -1,12 +1,37 @@
 #!/usr/bin/env bash
-# theme-toggle — switch Alacritty + Zellij between Catppuccin flavours in one shot.
+# theme-toggle — switch the terminal (Alacritty + Zellij) and the agent CLIs
+# (Claude Code, Codex, Grok) between Catppuccin flavours in one shot.
 #
-# Usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|status]
+# Usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|auto|status]
 #   no argument  toggle between $LIGHT and $DARK
-#   status       print the currently active flavour
+#   auto         leave the terminal flavour alone; put the agent CLIs into
+#                their follow-the-terminal mode (see AGENT NOTES)
+#   status       print the active flavour and every agent's current theme
 #
-# Running apps pick the change up live: Alacritty via live_config_reload,
-# Zellij (>= 0.42) via its config watcher.
+# Alacritty picks the change up live via live_config_reload and Zellij (>= 0.42)
+# via its config watcher. The agent CLIs read their config at startup only, so a
+# running agent session keeps its old colours until you restart it.
+#
+# AGENT NOTES
+#   claude  ~/.claude/settings.json  .theme
+#     Has a real "Auto (match terminal)" mode — theme = "auto".
+#
+#   grok    ~/.grok/config.toml      [ui] theme
+#     Has a real Terminal theme ("terminal-default") that paints no background
+#     of its own and takes every colour from the terminal palette. It is still
+#     rollout-gated, so `auto` also sets [features] terminal_theme = true to
+#     enable it locally. Note: grok's own theme = "auto" follows the *OS*
+#     appearance, not the terminal, so it is deliberately not used here.
+#
+#   codex   ~/.codex/config.toml     [tui] theme
+#     Has NO terminal-following mode, and no TUI chrome theme at all. [tui]
+#     theme and the /theme picker only select the syntect .tmTheme used for
+#     syntax highlighting. Codex paints its chrome — the composer / message box
+#     included — from the terminal's own ANSI palette plus the foreground and
+#     background it reads ONCE at startup via OSC 10/11. A live flavour switch
+#     never reaches that cached reading, which is why the composer stays dark
+#     after a toggle and why /theme cannot fix it: restart codex. `auto`
+#     therefore pins codex to the .tmTheme matching the current flavour.
 set -euo pipefail
 
 LIGHT="latte"
@@ -14,6 +39,9 @@ DARK="macchiato"
 
 alacritty_cfg="$HOME/.config/alacritty/alacritty.toml"
 zellij_cfg="$HOME/.config/zellij/config.kdl"
+claude_cfg="$HOME/.claude/settings.json"
+codex_cfg="$HOME/.codex/config.toml"
+grok_cfg="$HOME/.grok/config.toml"
 
 # Follow the stow symlink and edit the repo file in place; sed -i on the
 # symlink itself would replace it with a regular file.
@@ -37,6 +65,158 @@ current() {
   fi
 }
 
+# --- agent config editing ---------------------------------------------------
+# The agent CLIs are not stow-managed: ~/.claude, ~/.codex and ~/.grok are real
+# directories full of settings we must not disturb. Every write below is a
+# surgical single-key edit, staged in a temp file, validated as JSON/TOML, and
+# only then moved over the original.
+
+warn() { echo "theme-toggle: $*" >&2; }
+
+# install_over <tmp> <target> — replace <target> with <tmp> atomically, keeping
+# the target's permissions and (when it is a stow symlink) its real path. The
+# temp file lives beside the target so the rename never crosses filesystems.
+install_over() {
+  local tmp="$1" target mode
+  target="$(resolve "$2")"
+  mode="$(stat -f '%Lp' "$target" 2>/dev/null || stat -c '%a' "$target" 2>/dev/null || echo 644)"
+  chmod "$mode" "$tmp"
+  mv -f "$tmp" "$target"
+}
+
+# stage_tmp <target> — a temp file in the target's directory.
+stage_tmp() {
+  mktemp "$(dirname "$(resolve "$1")")/.theme-toggle.XXXXXX"
+}
+
+# toml_get <file> <table> <key>  — print the bare (unquoted) value, or nothing.
+toml_get() {
+  local file="$1" table="$2" key="$3"
+  [[ -f "$file" ]] || return 0
+  awk -v hdr="[$table]" -v key="$key" '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    { t = trim($0) }
+    substr(t, 1, 1) == "[" { intable = (t == hdr); next }
+    intable && match(t, "^" key "[ \t]*=") {
+      v = trim(substr(t, RSTART + RLENGTH))
+      gsub(/^"|"$/, "", v)
+      print v
+      exit
+    }
+  ' "$file"
+}
+
+# toml_set <file> <table> <key> <toml-literal>  — idempotent single-key upsert.
+# Rewrites the key in place inside <table>, creating the key (or the whole
+# table) when absent. Sub-tables such as [tui.model_availability_nux] are left
+# alone because the header must match exactly.
+toml_set() {
+  local file="$1" table="$2" key="$3" val="$4" tmp
+  [[ -f "$file" ]] || return 0
+  tmp="$(stage_tmp "$file")"
+  awk -v hdr="[$table]" -v key="$key" -v val="$val" '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    {
+      t = trim($0)
+      if (substr(t, 1, 1) == "[") {
+        if (t == hdr) {
+          sawtable = 1; intable = 1
+          print
+          if (!done) { print key " = " val; done = 1 }
+          next
+        }
+        intable = 0
+      }
+      # Drop any pre-existing copy of the key; the new one is already printed.
+      if (intable && match(t, "^" key "[ \t]*=")) next
+      print
+    }
+    END {
+      if (!sawtable) { print ""; print hdr; print key " = " val }
+    }
+  ' "$file" > "$tmp"
+
+  if ! python3 -c 'import sys,tomllib; tomllib.load(open(sys.argv[1],"rb"))' "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    warn "refusing to write $file — the edit would not parse as TOML"
+    return 1
+  fi
+  install_over "$tmp" "$file"
+}
+
+# json_set_theme <file> <value>
+json_set_theme() {
+  local file="$1" val="$2" tmp
+  [[ -f "$file" ]] || return 0
+  if ! command -v jq >/dev/null 2>&1; then
+    warn "jq not found — leaving $file alone"
+    return 1
+  fi
+  tmp="$(stage_tmp "$file")"
+  if ! jq --arg t "$val" '.theme = $t' "$file" > "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    warn "refusing to write $file — jq could not parse it"
+    return 1
+  fi
+  install_over "$tmp" "$file"
+}
+
+# --- flavour -> agent theme mapping -----------------------------------------
+
+claude_theme_for() {
+  case "$1" in
+    auto)  echo "auto" ;;    # native "Auto (match terminal)"
+    latte) echo "light" ;;
+    *)     echo "dark" ;;
+  esac
+}
+
+# Codex has no auto: pin it to the .tmTheme matching whatever is on screen now.
+codex_theme_for() {
+  case "$1" in
+    auto) echo "catppuccin-$(current)" ;;
+    *)    echo "catppuccin-$1" ;;
+  esac
+}
+
+grok_theme_for() {
+  case "$1" in
+    auto)  echo "terminal-default" ;;   # paints no bg; inherits the terminal
+    latte) echo "grokday" ;;
+    *)     echo "groknight" ;;
+  esac
+}
+
+apply_agents() {
+  local mode="$1" restart=()
+
+  if [[ -f "$claude_cfg" ]]; then
+    json_set_theme "$claude_cfg" "$(claude_theme_for "$mode")" \
+      && echo "  claude: $(claude_theme_for "$mode")" \
+      && restart+=("claude")
+  fi
+
+  if [[ -f "$codex_cfg" ]]; then
+    toml_set "$codex_cfg" "tui" "theme" "\"$(codex_theme_for "$mode")\"" \
+      && echo "  codex:  $(codex_theme_for "$mode")$([[ $mode == auto ]] && echo '  (no terminal-following mode; pinned to current flavour)')" \
+      && restart+=("codex")
+  fi
+
+  if [[ -f "$grok_cfg" ]]; then
+    if [[ "$mode" == auto ]]; then
+      # The Terminal theme is still rollout-gated; enable it locally.
+      toml_set "$grok_cfg" "features" "terminal_theme" "true" || true
+    fi
+    toml_set "$grok_cfg" "ui" "theme" "\"$(grok_theme_for "$mode")\"" \
+      && echo "  grok:   $(grok_theme_for "$mode")" \
+      && restart+=("grok")
+  fi
+
+  if [[ ${#restart[@]} -gt 0 ]]; then
+    echo "restart to pick it up: ${restart[*]}"
+  fi
+}
+
 apply() {
   local flavour="$1"
 
@@ -53,18 +233,40 @@ apply() {
   fi
 
   echo "theme: catppuccin-${flavour}"
+  apply_agents "$flavour"
+}
+
+status() {
+  echo "theme: catppuccin-$(current)"
+  if [[ -f "$claude_cfg" ]] && command -v jq >/dev/null 2>&1; then
+    echo "  claude: $(jq -r '.theme // "unset"' "$claude_cfg" 2>/dev/null || echo '?')"
+  fi
+  local v
+  if [[ -f "$codex_cfg" ]]; then
+    v="$(toml_get "$codex_cfg" tui theme)"
+    echo "  codex:  ${v:-unset}"
+  fi
+  if [[ -f "$grok_cfg" ]]; then
+    v="$(toml_get "$grok_cfg" ui theme)"
+    echo "  grok:   ${v:-unset}"
+  fi
+  return 0
 }
 
 case "${1:-toggle}" in
   latte|frappe|macchiato|mocha) apply "$1" ;;
   light)  apply "$LIGHT" ;;
   dark)   apply "$DARK" ;;
-  status) echo "theme: catppuccin-$(current)" ;;
+  auto)
+    echo "theme: catppuccin-$(current) (terminal unchanged)"
+    apply_agents auto
+    ;;
+  status) status ;;
   toggle)
     if [[ "$(current)" == "$LIGHT" ]]; then apply "$DARK"; else apply "$LIGHT"; fi
     ;;
   *)
-    echo "usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|status]" >&2
+    echo "usage: theme-toggle [latte|frappe|macchiato|mocha|light|dark|auto|status]" >&2
     exit 2
     ;;
 esac

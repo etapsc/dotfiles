@@ -83,6 +83,66 @@ Generated project layouts set the Zellij session name to the layout name and rea
 
 Use `--force` to overwrite an existing layout.
 
+## Theme
+
+`theme-toggle` switches the terminal (Alacritty + Zellij) and the three agent
+CLIs between Catppuccin flavours in one shot.
+
+```bash
+theme-toggle                 # toggle latte <-> macchiato
+theme-toggle mocha           # pick a flavour: latte | frappe | macchiato | mocha
+theme-toggle light           # aliases for the toggle endpoints
+theme-toggle dark
+theme-toggle auto            # agents follow the terminal; terminal unchanged
+theme-toggle status          # print the flavour and every agent's theme
+```
+
+Alacritty reloads live via `live_config_reload` and Zellij (>= 0.42) via its
+config watcher. The agent CLIs read their config only at startup, so restart a
+running agent session to pick the change up.
+
+### Agent support
+
+| CLI | Config | Key | Follows the terminal? |
+|---|---|---|---|
+| Claude Code | `~/.claude/settings.json` | `.theme` | yes — `auto` is "Auto (match terminal)" |
+| Grok | `~/.grok/config.toml` | `[ui] theme` | yes — `terminal-default` takes every colour from the terminal palette |
+| Codex | `~/.codex/config.toml` | `[tui] theme` | no |
+
+`theme-toggle auto` also sets grok's `[features] terminal_theme = true`, because
+the Terminal theme is still rollout-gated. Grok's own `theme = "auto"` follows
+the *OS* appearance rather than the terminal, so it is deliberately not used.
+
+Codex has no terminal-following mode and no TUI chrome theme at all: `[tui]
+theme` and the `/theme` picker only select the syntect `.tmTheme` used for
+**syntax highlighting**. Codex paints its chrome — the composer included — from
+the terminal's ANSI palette plus the foreground/background it reads once at
+startup via OSC 10/11, so a live flavour switch never reaches it. That is why
+the composer stays dark after a toggle and why `/theme` cannot fix it. **Restart
+codex.** Under `auto`, codex is pinned to the `.tmTheme` matching the current
+flavour.
+
+Agent configs are not stow-managed, so `theme-toggle` edits them in place under
+`$HOME`. Each write is a single-key upsert, staged in a temp file and validated
+as JSON/TOML before it replaces the original; an unparseable result is refused
+and the existing file is left untouched.
+
+## Agent updates
+
+`update-agents.sh` checks Claude Code, Codex, Grok, and Gemini (`agy`). It
+installs a tool only when a newer release is available, then prints what
+changed and the version of each one.
+
+```bash
+update-agents.sh           # check, update what's behind, print versions
+update-agents.sh --check   # report only
+```
+
+The command lives in the `scripts` stow package (`scripts/.local/bin` →
+`~/.local/bin`). For Codex, it reads the release version from
+`releases.openai.com` and runs `codex update` when that version is newer
+than the one installed.
+
 ## Uninstall
 
 Remove symlinks and restore backed-up configs:

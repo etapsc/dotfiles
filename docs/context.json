@@ -1,6 +1,6 @@
 {
   "schema_version": "context.v1",
-  "updated": "2026-08-12",
+  "updated": "2026-09-26",
   "project": {
     "name": "dotfiles"
   },
@@ -30,6 +30,10 @@
   },
   "repo_commands": {},
   "repo_state": [
+    {
+      "date": "2026-09-26",
+      "summary": "scripts/.local/bin/update-agents.sh is stowed to ~/.local/bin/update-agents.sh. It checks Claude Code, Codex, Grok, and Gemini (agy) and runs each installer only when a newer release is available, then prints what changed and the current version of each tool."
+    },
     {
       "date": "2026-07-21",
       "summary": "bin/new-zellij-project-layout.sh now generates single-pane claude, codex, and grok tabs; a code tab running nvim; and two-pane tools and shell tabs. README documents the layout. Existing local layouts require --force regeneration, and an existing named Zellij session must be deleted before the new layout structure appears."
