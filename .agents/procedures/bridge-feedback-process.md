@@ -1,9 +1,27 @@
 ---
 name: Bridge Feedback Process
-description: Triage evaluation feedback and determine iterate vs launch. Use after the human has completed manual testing and filled the feedback form.
+description: Process actual evaluation feedback or record explicit operator acceptance and deferrals. Never infer completed tests from an acceptance decision.
 ---
 
 # Feedback Processing
+
+## Step 0: Recognize Existing Operator Decisions
+
+Read the operator's current and earlier instructions before triage. Explicit
+acceptance such as "treat these slices as done" already authorizes recording it;
+it does not require a second go/no-go or completed live tests if the operator
+explicitly deferred them. Apply Project State and Acceptance in the entrypoint:
+append the scoped acceptance to `docs/decisions.md`, add a `feedback_history`
+entry with date, approver, features/slices, revision, decision pointer and explicit
+deferrals, then synchronize context and requirements statuses and handoff.
+An agent records the operator's decision; it does not independently accept work.
+
+A plan to test later is not a test result. Keep live evaluation deferred and
+unobserved, and keep `awaiting_feedback` true for the missing observations.
+Non-blocking warnings do not veto explicit acceptance. Preserve every gate's
+verdict and revision; accepting a known coverage limitation cannot turn it into
+passing evidence. If the message only supplies acceptance or deferral, skip the
+issue-count update below: do not invent a zero-issue test report.
 
 ## Step 1: Parse
 - Extract issues with severity (high/medium/low)
@@ -33,15 +51,27 @@ Returning to code/debug. Re-run $bridge-gate after fixes.
 Features → "in-progress"
 
 If medium/low only:
+
+Apply this recommendation branch only when no explicit acceptance is already available.
 ```
 LAUNCH CANDIDATE ✓
 Optional improvements (non-blocking):
 1. [Suggestion]
 Recommended: Launch. Medium issues → v1.1.
 ```
-Features → "done"
+Features stay at **"review"**.
+
+**Do NOT set "done" here.** This recommendation branch has no acceptance.
+`done` requires the operator's explicit go/no-go and an acceptance record in
+`docs/decisions.md`. That go/no-go may already have been supplied; Step 0 handles
+it without asking again. The approver records acceptance in
+`docs/decisions.md` and only then moves the feature to `done`.
 
 ## Step 5: Human Handoff (required)
+
+If acceptance was already recorded, report the accepted scope, decision pointer
+and deferred observations, then give the next concrete action. Do not present
+the go/no-go question again. Otherwise use the applicable lines below.
 
 ```
 HUMAN:

@@ -1,23 +1,51 @@
-# BRIDGE v2.16.0 — dotfiles
+# BRIDGE v3.0.2 — dotfiles
 
 ## Methodology
 
 BRIDGE = Brainstorm → Requirements → Implementation Design → Develop → Gate → Evaluate
 
-## Canonical Sources (priority)
+## Canonical Sources (authority ladder)
 
-1. docs/context.json — as-built truth
-2. docs/requirements.json — intent (bridge.v2 schema)
-3. docs/contracts/* — schemas/ADRs
-4. docs/conventions.md — folder taxonomy reference (what belongs in each docs/ subdir)
-5. docs/project-knowledge.md — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived docs/project-brief.md
-6. Codebase — ultimate reality; update context if stale
+1. The operator's live word — outranks every document below.
+2. docs/context.json — as-built truth. If it is stale, fix it.
+3. docs/requirements.json — intent (bridge.v2 schema)
+4. docs/contracts/* and docs/designs/ — schemas/ADRs and approved architecture
+5. docs/conventions.md — folder taxonomy reference (what belongs in each docs/ subdir)
+6. docs/project-knowledge.md — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived docs/project-brief.md
+7. Codebase — ultimate reality. When it disagrees with anything above, update docs/context.json or record the discrepancy. Do not improvise a rescope.
+
+## Project State and Acceptance
+
+Report these separately: delivery/acceptance, gate verdict and revision, automated
+evaluation, live evaluation, and publication. A PASS does not automatically mean
+accepted; a warning does not automatically mean blocked. `awaiting_feedback: true`
+means observations are outstanding, not that an accepted feature must return to
+`review`. A version marker describes the project or installed toolkit; a Git tag
+and a published release are separate facts.
+
+Explicit operator acceptance already given in the conversation is authorization
+to record it; do not ask for the same approval again. During a state-writing task,
+append the scoped acceptance to `docs/decisions.md`, add its pointer and any
+explicit deferrals to `context.json.feedback_history`, then synchronize
+`context.json.feature_status`, requirements feature statuses, slice status and
+handoff. Refresh requested derived reports from that reconciled state. Read-only
+commands report a discrepancy without changing files.
+
+Keep ordinary unaccepted work at `review`. If the operator explicitly accepts with
+deferred checks or a known coverage limitation, record that disposition and mark
+the accepted scope `done`; keep those checks deferred/unobserved. Acceptance never
+changes test outcomes, erases a failed gate, expands a gate's revision coverage,
+or authorizes publication. Warnings are non-blocking unless an applicable
+requirement or explicit operator decision makes one blocking; cite that source.
+Never reopen accepted work solely because an older report says `review`, live
+feedback is deferred, or a release tag is absent. Reopen it for a reported issue
+or a new scoped change, preserving the earlier acceptance record.
 
 ## Hard Constraints
 
 - Respect scope.in_scope / out_of_scope / non_goals. No scope creep without user instruction.
 - Work in thin vertical slices. Prefer PR-sized diffs.
-- Every ATxx requires executable evidence before claiming "done".
+- Every ATxx claimed as passed requires observed executable evidence or a recorded manual observation. Operator acceptance with explicitly deferred checks follows Project State and Acceptance above; it never makes an unrun check pass.
 - Feature status flow: planned → in-progress → review → done | blocked.
 - No full-repo scans by default. Targeted inspection only.
 - Use stable IDs: Fxx, ATxx, Sxx, UFxx, Rxx.
@@ -52,7 +80,7 @@ Use subagents for isolated, focused work. The main session acts as orchestrator.
 - **bridge-architect** — design/contracts for current slice. Read-only except docs/contracts/ and docs/decisions.md.
 - **bridge-coder** — implement current slice scope. Small testable increments. Tests satisfy ATxx. No unrelated refactors.
 - **bridge-debugger** — reproduce first, fix root cause, add regression tests. Report: commands → results → files changed.
-- **bridge-auditor** — never fixes code. Verifies ATxx evidence, checks scope, runs quality gates. Produces docs/gates-evals/{slice-range}-gate-report.md.
+- **bridge-auditor** — never fixes code. Verifies ATxx evidence, checks scope, runs quality gates. In Independent gate mode produces docs/reviews/{slice-range}-gate-report.md and the gate_history entry; in Self-audit mode produces docs/reviews/{slice-range}-self-audit.md and writes no context.
 - **bridge-evaluator** — only after gate passes. Generates test scenarios from user perspective. Maps to user_flows and acceptance_tests.
 
 Pass only relevant context when delegating: relevant JSON slices + file paths, not the whole repo.
@@ -86,3 +114,8 @@ These skills are auto-discovered. Key ones:
 - **bridge-session-management** — session re-entry briefs and wrap-up procedures
 - **bridge-context-sync** — create or update context.json from code reality
 - **bridge-feedback-process** — triage evaluation feedback, decide iterate vs launch
+
+## Local harness extensions
+If `.ai-local/index.md` exists, read it and follow its instructions too.
+It lists optional per-developer harness directories. They are ADDITIVE —
+nothing there overrides this file, docs/requirements.json, or docs/context.json.

@@ -10,3 +10,5 @@
 *.p12
 credentials.json
 zellij/.config/zellij/layouts/projects
+.ai-local/*
+!.ai-local/README.md

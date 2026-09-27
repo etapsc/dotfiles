@@ -7,6 +7,13 @@ description: Session start (re-entry brief) and end (wrap-up) procedures. Use wh
 
 ## Fresh Session Re-entry
 
+Read current feature statuses together with the latest scoped acceptance in
+`docs/decisions.md` / `context.json.feedback_history`. Follow Project State and
+Acceptance in the entrypoint: report acceptance, gate revision, automated eval,
+live eval and publication separately. Older `review` notes and non-blocking
+warnings cannot override a later acceptance. Re-entry is read-only; surface any
+remaining contradiction and its authoritative decision without repairing files.
+
 Output brief:
 
 ```
@@ -66,13 +73,20 @@ Then STOP and wait.
 
 ## Session Wrap-up
 
-1. Update docs/context.json:
+1. Reconcile the operator's decisions before writing the handoff. If explicit
+   acceptance was already given, record it in `docs/decisions.md` and
+   `context.json.feedback_history` without asking again; follow Project State
+   and Acceptance in the entrypoint. Synchronize requirements feature statuses
+   with context, preserve deferred checks as unobserved, and expire obsolete
+   watch-outs. Never reset accepted features to `review` because live feedback
+   is pending or a historical gate report predates acceptance.
+2. Update docs/context.json:
    - feature_status
    - handoff (stopped_at, next_immediate, watch_out)
    - next_slice
-2. Append decisions to docs/decisions.md (YYYY-MM-DD: [Decision] - [Rationale])
-3. Output summary: accomplished, remaining, blockers
-4. End with:
+3. Append other decisions to docs/decisions.md (YYYY-MM-DD: [Decision] - [Rationale]); do not duplicate acceptance already recorded.
+4. Output summary: accomplished, remaining, blockers. Separate deferred follow-ups from acceptance blockers and report the current Git state rather than copying old handoff prose.
+5. End with:
 
 ```
 HUMAN:

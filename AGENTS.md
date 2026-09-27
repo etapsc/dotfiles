@@ -1,4 +1,4 @@
-# BRIDGE v2.16.0 — dotfiles
+# BRIDGE v3.0.2 — dotfiles
 
 ## Methodology
 
@@ -6,20 +6,48 @@ BRIDGE = Brainstorm → Requirements → Implementation Design → Develop → G
 
 A structured methodology for solo-preneur software development with AI coding agents.
 
-## Canonical Sources (priority)
+## Canonical Sources (authority ladder)
 
-1. `docs/context.json` — as-built truth
-2. `docs/requirements.json` — intent (bridge.v2 schema)
-3. `docs/contracts/*` — schemas/ADRs
-4. `docs/conventions.md` — folder taxonomy reference (what belongs in each `docs/` subdir)
-5. `docs/project-knowledge.md` — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived `docs/project-brief.md`
-6. Codebase — ultimate reality; update context if stale
+1. The operator's live word — outranks every document below.
+2. `docs/context.json` — as-built truth. If it is stale, fix it.
+3. `docs/requirements.json` — intent (bridge.v2 schema)
+4. `docs/contracts/*` and `docs/designs/` — schemas/ADRs and approved architecture
+5. `docs/conventions.md` — folder taxonomy reference (what belongs in each `docs/` subdir)
+6. `docs/project-knowledge.md` — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived `docs/project-brief.md`
+7. Codebase — ultimate reality. When it disagrees with anything above, update `docs/context.json` or record the discrepancy. Do not improvise a rescope.
+
+## Project State and Acceptance
+
+Report these separately: delivery/acceptance, gate verdict and revision, automated
+evaluation, live evaluation, and publication. A PASS does not automatically mean
+accepted; a warning does not automatically mean blocked. `awaiting_feedback: true`
+means observations are outstanding, not that an accepted feature must return to
+`review`. A version marker describes the project or installed toolkit; a Git tag
+and a published release are separate facts.
+
+Explicit operator acceptance already given in the conversation is authorization
+to record it; do not ask for the same approval again. During a state-writing task,
+append the scoped acceptance to `docs/decisions.md`, add its pointer and any
+explicit deferrals to `context.json.feedback_history`, then synchronize
+`context.json.feature_status`, requirements feature statuses, slice status and
+handoff. Refresh requested derived reports from that reconciled state. Read-only
+commands report a discrepancy without changing files.
+
+Keep ordinary unaccepted work at `review`. If the operator explicitly accepts with
+deferred checks or a known coverage limitation, record that disposition and mark
+the accepted scope `done`; keep those checks deferred/unobserved. Acceptance never
+changes test outcomes, erases a failed gate, expands a gate's revision coverage,
+or authorizes publication. Warnings are non-blocking unless an applicable
+requirement or explicit operator decision makes one blocking; cite that source.
+Never reopen accepted work solely because an older report says `review`, live
+feedback is deferred, or a release tag is absent. Reopen it for a reported issue
+or a new scoped change, preserving the earlier acceptance record.
 
 ## Hard Constraints
 
 - Respect `scope.in_scope` / `out_of_scope` / `non_goals`. No scope creep without user instruction.
 - Work in thin vertical slices. Prefer PR-sized diffs.
-- Every ATxx requires executable evidence before claiming "done".
+- Every ATxx claimed as passed requires observed executable evidence or a recorded manual observation. Operator acceptance with explicitly deferred checks follows Project State and Acceptance above; it never makes an unrun check pass.
 - Feature status flow: `planned → in-progress → review → done | blocked`.
 - No full-repo scans by default. Targeted inspection only.
 - Use stable IDs: Fxx, ATxx, Sxx, UFxx, Rxx.
@@ -48,7 +76,7 @@ Never declare a slice "done" without telling the human exactly how to verify it.
 
 ## Role Modes
 
-Since Codex is single-agent, switch between these modes mentally based on the current task. Each mode has different rules:
+This pack runs the workflow through role switching inside the main agent: adopt the mode that fits the current task. Each mode has different rules:
 
 ### Orchestrator (default)
 - Operate per-slice (Sxx). Select from `execution.recommended_slices` or propose smallest next.
@@ -137,13 +165,13 @@ Wrap each check with `bridge_run "<label>" <cmd...>` so `bridge_summary` aggrega
 - Use `commands_to_run` from `docs/context.json`.
 - If operator-facing manual checks are automatable by shell/API/file inspection/browser automation, APPEND them into the GATE-owned fence (`# >>> BRIDGE slice <slice> gate (managed) >>>` … `<<<`) of `tests/slices/<slice>-verify.sh` / `tests/slices/<slice>-smoke.sh`, rewriting in place. Do NOT write `tests/e2e/<slice>-manual-automation.sh`. Cite the command/result in the gate report. (See AGENTS.md "Per-Slice Verification Scaffolding" for the marker spec; the producer owns the distinct `producer (managed)` fence — never touch it.)
 - Leave only human-only checks (subjective UX, external accounts, live credentials, exploratory feel) as prose for the operator in the gate report.
-- Write only to: `docs/gates-evals/{slice-range}-gate-report.md`, `docs/context.json`, and the GATE-owned fence of `tests/slices/<slice>-{verify,smoke}.sh`.
+- Write only to, and only what the selected mode permits: **Independent gate** — `docs/reviews/{slice-range}-gate-report.md`, `docs/context.json` (gate_history + ATxx evidence), and the GATE-owned fence of `tests/slices/<slice>-{verify,smoke}.sh`. **Self-audit** — `docs/reviews/{slice-range}-self-audit.md` and nothing else: no context write, no fence, no status.
 
 ### Evaluate Mode
-- Only run after gate passes (verify `docs/gates-evals/{slice-range}-gate-report.md`).
+- Only run after gate passes (verify `docs/reviews/{slice-range}-gate-report.md`).
 - Generate from user perspective. Map to user_flows and acceptance_tests.
 - Script automatable scenario steps into `tests/slices/<slice>-eval.sh` as the actual user-facing scenario commands (drive the product as an operator would; assert observable outcomes). It MUST NOT merely re-run the project test framework (`bash test.sh` / unit / integration) — that is verify/smoke's job. Use the `eval (managed)` fence; rewrite in place. Human-only checks stay prose in the eval-scenarios.md.
-- Write only to: `docs/gates-evals/{slice-range}-eval-scenarios.md`, `docs/context.json`, `tests/slices/<slice>-eval.sh`.
+- Write only to: `docs/reviews/{slice-range}-eval-scenarios.md`, `docs/context.json`, `tests/slices/<slice>-eval.sh`.
 
 ## Available Skills
 
@@ -155,8 +183,7 @@ Invoke skills with `$skill-name` in your prompt. Key skills:
 **Workflow commands** (invoke directly):
 - `$bridge-brainstorm` — Phase 0: brainstorm new project
 - `$bridge-scope` — Phase 0: scope feature/fix for existing project
-- `$bridge-requirements` — Phase 1: generate requirements from brainstorm
-- `$bridge-requirements-only` — Phase 1: requirements from description (skip brainstorm)
+- `$bridge-requirements` — Phase 1: generate requirements (From Brainstorm or From Description mode)
 - `$bridge-plan-feature` — Phase 1: incremental requirements for existing project
 - `$bridge-integrate-design` — Integrate a design document, PRD, or version spec
 - `$bridge-start` — Start implementation
@@ -165,8 +192,7 @@ Invoke skills with `$skill-name` in your prompt. Key skills:
 - `$bridge-gate` — Run quality gate
 - `$bridge-eval` — Generate evaluation pack
 - `$bridge-feedback` — Process evaluation feedback
-- `$bridge-context-create` — Create context.json
-- `$bridge-context-update` — Sync context.json
+- `$bridge-context` — Create or refresh context.json (Create or Update mode)
 - `$bridge-advisor` — Strategic advisor: viability, positioning, launch readiness
 - `$bridge-project-brief` — Generate or refresh docs/project-brief.md (portable handoff for external agents)
 - `$bridge-status` — Generate or refresh docs/STATUS.md (human-readable engineering status log)
@@ -179,3 +205,8 @@ Invoke skills with `$skill-name` in your prompt. Key skills:
 - `.agents/procedures/bridge-session-management.md` — Session re-entry and wrap-up procedures
 - `.agents/procedures/bridge-context-sync.md` — Context synchronization procedures
 - `.agents/procedures/bridge-feedback-process.md` — Feedback triage procedures
+
+## Local harness extensions
+If `.ai-local/index.md` exists, read it and follow its instructions too.
+It lists optional per-developer harness directories. They are ADDITIVE —
+nothing there overrides this file, docs/requirements.json, or docs/context.json.

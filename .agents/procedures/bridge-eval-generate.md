@@ -6,9 +6,14 @@ description: Generate user test scenarios, E2E tests, and feedback template. Use
 # Evaluation Pack Generation
 
 ## Precondition
-Verify the most recent docs/gates-evals/{slice-range}-gate-report.md shows PASS. If not, abort and notify.
+Verify the most recent docs/reviews/{slice-range}-gate-report.md shows PASS. If not, abort and notify.
 
 **Derive the slice range prefix** from the in-scope slices (matching the gate report). Examples: single slice -> `S22`, consecutive range -> `S10-S15`, non-consecutive -> `S10-S12-S15`. Use this prefix for the eval scenarios filename.
+
+Evaluation and acceptance are separate states. Read the latest scoped acceptance
+and explicit deferrals before writing current-state prose. `awaiting_feedback`
+tracks missing observations; it does not reset accepted features to `review`.
+Keep planned live tests unobserved and preserve the gated revision's coverage.
 
 ## Step 1: Manual Test Scenarios
 
@@ -20,7 +25,7 @@ For every scenario:
 - Human-only means real UX judgment, visual polish, external accounts, live credentials, exploratory product feel, or "start a browser and decide whether it feels right".
 - Script every automatable step into `tests/slices/<slice>-eval.sh` as the **actual user-facing scenario commands** — drive the product the way an operator/user would (invoke the real commands/flows named in each scenario's `### Steps:`) and assert the observable outcome of each step. This file MUST NOT merely re-run the project test framework (`bash test.sh` / the unit suite / the integration suite) — re-running the test framework is verify/smoke's job (`tests/slices/<slice>-{verify,smoke}.sh`, owned by producers + gate). Eval drives the product end-to-end as a user.
 - Run the automation when feasible, record the command/result in the eval scenarios file, and pre-check or annotate checklist items that the automation already verified.
-- Leave only human-only checks for the operator to perform manually as prose in `docs/gates-evals/{slice-range}-eval-scenarios.md` (which is never removed).
+- Leave only human-only checks for the operator to perform manually as prose in `docs/reviews/{slice-range}-eval-scenarios.md` (which is never removed).
 
 ### Writing `tests/slices/<slice>-eval.sh`
 
@@ -46,7 +51,7 @@ bridge_summary
 - Wrap each scenario command with `bridge_run "<label>" <cmd...>` so `bridge_summary` aggregates pass/fail and returns non-zero on any failure.
 - Run it via `bash tests/slices/<slice>-eval.sh`, `make eval` (runs all `*-eval.sh` via `tests/run-eval.sh`), or `make test-slice SLICE=<slice>`.
 
-Create docs/gates-evals/{slice-range}-eval-scenarios.md:
+Create docs/reviews/{slice-range}-eval-scenarios.md:
 
 ```markdown
 # Evaluation Scenarios
@@ -116,13 +121,13 @@ Append to eval_history in docs/context.json:
 ## Step 4: Output
 ```
 EVALUATION PACK GENERATED ✓
-Created: docs/gates-evals/{slice-range}-eval-scenarios.md ([X] scenarios), tests/slices/<slice>-eval.sh ([Y] scenario commands)
+Created: docs/reviews/{slice-range}-eval-scenarios.md ([X] scenarios), tests/slices/<slice>-eval.sh ([Y] scenario commands)
 
 HUMAN:
 1. Run automated eval coverage yourself: `make eval` (or `bash tests/slices/<slice>-eval.sh`)
-2. Walk through only the human-only items in docs/gates-evals/{slice-range}-eval-scenarios.md — do not repeat checks already covered by automation unless you want a spot check
+2. Walk through only the human-only items in docs/reviews/{slice-range}-eval-scenarios.md — do not repeat checks already covered by automation unless you want a spot check
 3. Actually use the application as a real user would for each human-only scenario
-4. Fill in the feedback form at the bottom of docs/gates-evals/{slice-range}-eval-scenarios.md
+4. Fill in the feedback form at the bottom of docs/reviews/{slice-range}-eval-scenarios.md
 5. Note any DX friction, performance issues, or "this feels wrong" moments
 6. Paste your filled feedback into: $bridge-feedback [your feedback]
 

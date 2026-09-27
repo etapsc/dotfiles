@@ -12,6 +12,25 @@ You are generating a STATUS document for in-team consumption. This is a living e
 
 Both can coexist. Both are derived artifacts; both fully overwrite on each run.
 
+## State Interpretation
+
+Follow Project State and Acceptance in the repository entrypoint. Read the latest
+scoped acceptance/reopening in `docs/decisions.md` and `context.json.feedback_history`
+alongside current feature statuses. Report delivery/acceptance, gate verdict with
+revision, automated eval, live eval and publication as separate facts. Preserve
+explicit acceptance even when live evaluation is deferred; do not turn warnings,
+`awaiting_feedback`, older `review` prose, or a missing tag into an acceptance
+blocker. A blocker needs an applicable requirement or operator decision cited by
+name. Historical results keep their original scope and do not cover later edits.
+Project/installed version metadata does not prove a tag or published release.
+
+These are derived reports, so do not hide a contradiction by changing only this
+file. If the task authorizes reconciliation, first record the operator's existing
+decision and synchronize canonical state through Context/Feedback, then generate
+this report. Do not request approval already supplied. If only reporting is
+authorized, identify the authoritative decision and the exact stale field;
+Status may show that discrepancy, while Brief waits for canonical reconciliation.
+
 ## Inputs
 
 Read these in order:
@@ -46,6 +65,10 @@ Version: [from .bridge-version or requirements.json project.version]
 Source of truth: docs/context.json (feature status), docs/requirements.json (intent)
 
 [One-paragraph project summary — what it is, who it's for, current direction]
+
+[State table: Delivery/acceptance and decision pointer | Gate verdict and revision |
+Automated evaluation | Live evaluation and deferrals | Tag/publication evidence.
+Use "unknown/not recorded" for absent evidence, never infer one row from another.]
 
 ## In-Flight Branches
 
@@ -95,7 +118,7 @@ Slices [DONE | IN PROGRESS | PLANNED]: Sxx-Syy
 
 ## Known Open Issues
 
-[Source: gate_history blocking_issues + warnings from the most recent N gate reports, plus execution.open_questions from requirements.json. Format as bullets, each with severity (blocker/warning/note) and the issue text. Mark resolved items as struck-through or omit them.]
+[Source: unresolved findings from the latest applicable gate for each scope, reconciled with later decisions, plus execution.open_questions. Preserve each finding's recorded severity; label operator-deferred follow-ups separately. Do not resurrect resolved historical blockers or upgrade warnings into acceptance blockers. Cite the requirement or operator decision for every current blocker.]
 
 - [severity] [issue text] (from gate YYYY-MM-DD or OQxx)
 
@@ -131,7 +154,7 @@ Your response MUST end with a HUMAN: block. Use this format:
 HUMAN:
 1. Review docs/STATUS.md — does it accurately represent the project's current state?
 2. If anything important is missing (e.g. an in-flight branch the agent didn't see), record it in context.json.parallel_tracks or context.json.handoff before rerunning — STATUS overwrites on every run, manual edits inside STATUS.md will not survive
-3. Decide: is this status snapshot ready to share with the team, or does context.json need a refresh first via $bridge-context-update?
+3. Decide: is this status snapshot ready to share with the team, or does context.json need a refresh first via $bridge-context?
 ```
 
 The user will provide arguments inline with the skill invocation.

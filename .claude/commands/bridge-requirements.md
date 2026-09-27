@@ -1,11 +1,42 @@
 ---
-description: "Phase 1: Generate requirements.json and context.json from brainstorm output"
+description: "Phase 1: Generate requirements.json and context.json — from brainstorm output or from a written project description"
 
 ---
 
+You are following the BRIDGE v2 methodology for solo-preneur software development with AI dev teams.
+
+BRIDGE = Brainstorm → Requirements → Implementation Design → Develop → Gate → Evaluate
+
 ## TASK - PHASE 1: GENERATE REQUIREMENTS PACK (bridge.v2)
 
-Based on the Phase 0 brainstorm output above (or provided below), generate TWO JSON files to be saved in the project.
+### Step 0: Select Mode (content-driven)
+
+This command covers both ways into Phase 1. Pick the mode that matches the input;
+mode selection is content-driven, never inferred from a flag.
+
+- **From Brainstorm** — Phase 0 brainstorm output is present above, or is provided
+  below. Use it as the source material.
+- **From Description** — no brainstorm ran. The operator supplies a written
+  project description, PRD, spec, or requirements prose. Phase 0 is skipped.
+
+State the selected mode at the top of your output:
+
+```
+#### Selected Mode: From Brainstorm | From Description
+[one sentence on why that mode fits this input]
+```
+
+If both a brainstorm and a written description are present, prefer **From
+Brainstorm** and treat the description as supplementary. If neither is present,
+stop and ask for one — do not invent a project.
+
+Both modes produce the same three files with the same schemas. From Description
+mode should stay lean and execution-oriented: scope, constraints, acceptance
+tests, and slices matter most.
+
+### The output
+
+Generate TWO JSON files to be saved in the project, plus the playbook in Step 3.
 
 Rules:
 - Output JSON only per file. No prose between them.
@@ -118,9 +149,8 @@ Rules:
   "schema_version": "context.v1",
   "updated": "[TODAY'S DATE]",
   "project": { "name": "" },
-  "feature_status": [
-    { "feature_id": "F01", "status": "planned", "notes": "", "evidence": [] }
-  ],
+  "feature_status": { "F01": "planned" },
+  "evidence": {},
   "handoff": {
     "stopped_at": "Project initialization",
     "next_immediate": "Set up project scaffolding",
@@ -175,7 +205,7 @@ Exit criteria: [ATxx list].
 
 Rules:
 - Run [test/lint/typecheck commands from quality_gates] before declaring done
-- Update docs/context.json with feature_status, evidence, gate_history
+- Update docs/context.json: feature_status (object map of id to status) and the top-level evidence map keyed by ATxx
 - Do NOT refactor previous slice code unless a test is failing
 - If you hit an open question, STOP and ask — do not silently skip
 ```
@@ -206,6 +236,7 @@ Persist matches in `execution.specialists_recommended` within the requirements.j
     "id": "specialist-id",
     "rationale": "Why this specialist is relevant to this project",
     "source": "bridge-requirements",
+    "mode": "from-brainstorm|from-description",
     "matched_signals": ["keyword1", "keyword2"],
     "applicable_features": ["F01", "F03"],
     "confidence": "high|medium|low"
@@ -221,6 +252,7 @@ Your response MUST end with a HUMAN: block. Use this format:
 
 ```
 HUMAN:
+0. Selected Mode was [From Brainstorm | From Description] — was that the right read of your input?
 1. Review docs/requirements.json — are scope, features, and acceptance tests correct?
 2. Review docs/context.json — does the initial state look right?
 3. Check specialist recommendations — are they relevant? Override if needed

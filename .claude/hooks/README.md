@@ -107,7 +107,7 @@ back to common defaults.
 
 ## Customizing for Your Project
 
-After running `/bridge-requirements` or `/bridge-requirements-only`,
+After running `/bridge-requirements`,
 update hook scripts with your project's lint/test commands from
 `docs/context.json` → `commands_to_run`.
 

@@ -4,6 +4,25 @@ description: "Generate or refresh docs/project-brief.md — a portable project e
 
 You are generating a project brief for external consumption. This document explains the project to outside AI agents, multi-agent councils, quorum-style discussions, and anyone onboarding to this codebase for the first time.
 
+## State Interpretation
+
+Follow Project State and Acceptance in the repository entrypoint. Read the latest
+scoped acceptance/reopening in `docs/decisions.md` and `context.json.feedback_history`
+alongside current feature statuses. Report delivery/acceptance, gate verdict with
+revision, automated eval, live eval and publication as separate facts. Preserve
+explicit acceptance even when live evaluation is deferred; do not turn warnings,
+`awaiting_feedback`, older `review` prose, or a missing tag into an acceptance
+blocker. A blocker needs an applicable requirement or operator decision cited by
+name. Historical results keep their original scope and do not cover later edits.
+Project/installed version metadata does not prove a tag or published release.
+
+These are derived reports, so do not hide a contradiction by changing only this
+file. If the task authorizes reconciliation, first record the operator's existing
+decision and synchronize canonical state through Context/Feedback, then generate
+this report. Do not request approval already supplied. If only reporting is
+authorized, identify the authoritative decision and the exact stale field;
+Status may show that discrepancy, while Brief waits for canonical reconciliation.
+
 ## Inputs
 
 Read these in order:
@@ -32,7 +51,8 @@ If the directory scan reveals directories that are not referenced in `docs/requi
 
 When sources differ:
 
-- `docs/context.json` wins for current state, handoff, and gate/eval history
+- the operator's live word outranks documents; persist authorized decisions before deriving the brief
+- reconciled `docs/context.json` wins for current state and handoff; gate/eval history supplies revision-scoped evidence, not an acceptance veto
 - `docs/requirements.json` wins for intended scope, feature inventory, user flows, and acceptance tests
 - repository inspection validates architecture only; it must not become a substitute for stale BRIDGE artifacts
 - do not overstate pack symmetry: the supported packs share BRIDGE methodology and command surface, but not the same internal implementation model
@@ -44,8 +64,11 @@ This command is for canonical-state summarization, not reconciliation.
 Before generating the brief, verify that:
 
 - `docs/requirements.json` and `docs/context.json` exist and are current
-- the latest gate/eval artifacts already reflect the current intended project state
-- there is no known need to run `bridge-context-update`, `bridge-gate`, or `bridge-eval` first
+- canonical state records the latest acceptance/reopening and any explicit deferrals
+- gate/eval artifacts identify the revisions they actually tested; their historical
+  `review` wording or a documented coverage gap does not by itself make state stale
+- any authorized canonical reconciliation has completed; explicitly deferred live
+  evaluation does not require another Gate/Eval before generating this summary
 
 If the canonical BRIDGE artifacts are stale, contradictory, or obviously behind the intended current state:
 
@@ -71,7 +94,7 @@ Status: [active development | maintenance | planning | blocked]
 When using this brief as context:
 - Treat docs/requirements.json as the source of truth for scope and acceptance tests
 - Treat docs/context.json as the source of truth for current state and handoff
-- This brief is a summary — if it conflicts with requirements.json or context.json, the JSON files win
+- This brief is a summary of reconciled canonical state; the operator's live word remains highest authority, with acceptance recorded in docs/decisions.md
 - Respect scope.out_of_scope and scope.non_goals when proposing features
 - Use stable IDs (Fxx, ATxx, Sxx, UFxx, Rxx) when referring to project elements
 - Do not assume features marked "planned" are committed — they are candidates
@@ -100,7 +123,7 @@ Recommended context packet for external discussions:
 
 ## Current State
 
-[Feature status table from requirements + context. Active or next slice from context if present. Latest gate/eval state. Recent activity recorded in canonical docs only.]
+[Feature status table from reconciled requirements + context. Active or next slice if present. Separately state delivery/acceptance with its decision pointer, gate verdict and revision, automated eval, live eval/deferrals, and publication evidence. Recent activity recorded in canonical docs only.]
 
 ## Constraints and Non-Goals
 

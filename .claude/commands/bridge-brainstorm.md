@@ -171,6 +171,13 @@ HUMAN:
 Produces safe per-agent prompts and scratch-output rules for multiple
 simultaneous agents. This is Phase 0 ideation fan-out, NOT execution planning.
 
+> **Multi-model fan-out: use Quorum.** This mode writes prompts for a human to
+> dispatch; it does not run anything. If the goal is genuinely several *models*
+> answering the same question at once, Quorum does that natively — run the fan-out
+> there and bring the transcripts back into synthesis mode. Use Parallel mode when
+> the agents are splitting *topics*, not when they are duplicating one question
+> across models.
+
 ### Phase 0 — Parallel Brainstorm Setup (IDEATION ONLY)
 
 #### Selected Mode: Parallel

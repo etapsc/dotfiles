@@ -19,7 +19,7 @@ fi
 # Check for context.json
 if [ ! -f "$CONTEXT_FILE" ]; then
   echo "BRIDGE: docs/context.json is missing but docs/requirements.json exists."
-  echo "Consider running /bridge-context-create to generate it."
+  echo "Consider running /bridge-context to generate it."
   exit 0
 fi
 
@@ -31,7 +31,7 @@ if command -v stat &>/dev/null; then
     AGE_HOURS=$(( (NOW - MODIFIED) / 3600 ))
     if [ "$AGE_HOURS" -gt 48 ]; then
       echo "BRIDGE: docs/context.json was last updated ${AGE_HOURS}h ago."
-      echo "Consider running /bridge-context-update to sync with current code."
+      echo "Consider running /bridge-context to sync with current code."
     fi
   fi
 fi

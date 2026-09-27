@@ -63,7 +63,7 @@ Indicators: "fix", "bug", "issue", "wrong", "missing", "doesn't work", "investig
 
 **APPROVED**:
 Explicit approval only: "done", "approved", "PASSED", "looks good", "move on", "next slice", "continue".
-→ Update feature status to "review" (triggers gate) or "done" (if trivial). Update docs/context.json: feature_status, handoff, next_slice.
+→ Update feature status to "review" — this triggers the gate. Do NOT set "done" here: "done" requires a passing gate AND an acceptance record in docs/decisions.md, and it is the approver who writes both. Update docs/context.json: feature_status, handoff, next_slice.
 
 **STOP**:
 Explicit stop/pause request.

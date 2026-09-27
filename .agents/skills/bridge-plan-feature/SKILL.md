@@ -13,7 +13,7 @@ Based on the scope output from $bridge-scope (or the description provided below)
 
 1. Load docs/requirements.json — note the HIGHEST existing IDs (e.g., if F12 exists, new features start at F13)
 2. Load docs/context.json — note current feature_status, active slices, and commands_to_run
-3. If neither exists, treat this as a fresh setup and create both from scratch (fall back to $bridge-requirements-only behavior)
+3. If neither exists, treat this as a fresh setup and create both from scratch (fall back to $bridge-requirements behavior)
 
 ### Step 1b: Identify the Operator-Selected Option
 
