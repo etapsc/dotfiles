@@ -12,9 +12,9 @@
   "feature_status": [],
   "workspace_feedback": [],
   "handoff": {
-    "stopped_at": "Regenerated all 8 remaining project layouts (bridge, dotfiles, frameview, labz, lumera, lumera-arc, lumera-infra-deploy, quorum) with --force to the six-tab structure; all 9 local layouts now match the dafd99d generator. Layouts are git-ignored, so no repo diff resulted",
-    "next_immediate": "Delete stale named Zellij sessions (bridge, quorum, lumera, lumera-infra-deploy, lumera-arc, dotfiles) so regenerated layouts take effect on next launch; the duplicate-compinit cleanup in zsh/.zshrc remains optional",
-    "watch_out": "Several stale-structure Zellij sessions are LIVE and hold running processes - kill/delete deliberately, not in bulk. The Macchiato theme remains active, so the tracked Alacritty and Zellij configs intentionally show dirty diffs against the committed Latte default."
+    "stopped_at": "Operator accepted the portable agent CLI status lines (8c0480a) and web_sharing \"off\" (e21524b) on 2026-09-26; all work was pushed to origin/main at e21524b. Only this acceptance record (docs/decisions.md, docs/context.json) is uncommitted.",
+    "next_immediate": "Optional, not yet requested: (1) `fix scripts` - delete the stray scripts/theme-toggle at the package root (stow links it as ~/theme-toggle) and add --no-folding to the `scripts` stow in both bootstrap scripts; (2) delete the EXITED stale Zellij sessions lumera-arc and dotfiles; (3) duplicate-compinit cleanup in zsh/.zshrc.",
+    "watch_out": "Bootstrap's plain `stow ... scripts` can fold a missing ~/.local/bin (or ~/.local) into a repo symlink, after which the claude/codex/grok installers would write into the repo - on a new machine run mkdir -p ~/.local/bin first or stow with --no-folding. Codex/Grok status line keys need python3 >= 3.11 (tomllib). On Mjolnir ~/.config/zellij is a directory symlink into the checkout, so git pull applies config.kdl changes live."
   },
   "next_slice": {
     "slice_id": "",
@@ -23,7 +23,7 @@
     "acceptance_tests": []
   },
   "commands_to_run": {
-    "test": "",
+    "test": "bin/check-health.sh",
     "lint": "",
     "typecheck": "",
     "dev": ""
@@ -32,7 +32,23 @@
   "repo_state": [
     {
       "date": "2026-09-26",
+      "summary": "Agent CLI status lines are portable (8c0480a): the agent-cli stow package holds ~/.claude/statusline.sh and ~/.grok/statusline.sh, and bin/setup-agent-statusline.sh links them with stow --no-folding and upserts only Claude .statusLine, Grok [ui.status_line] and Codex [tui] status_line/status_line_use_colors (validated JSON/TOML, idempotent; --check is called by check-health.sh). Both bootstrap scripts run it and install jq (plus python on macOS). Live on Sleipnir; accepted 2026-09-26."
+    },
+    {
+      "date": "2026-09-26",
+      "summary": "zellij config.kdl sets web_sharing \"off\" (e21524b): sessions are shared through the web server only when they opt in; web server service files unchanged."
+    },
+    {
+      "date": "2026-09-26",
+      "summary": "theme-toggle also themes Claude Code, Codex and Grok and has an `auto` mode (d773ca9); BRIDGE toolkit upgraded to v3.0.2 (6c7fae5)."
+    },
+    {
+      "date": "2026-09-26",
       "summary": "scripts/.local/bin/update-agents.sh is stowed to ~/.local/bin/update-agents.sh. It checks Claude Code, Codex, Grok, and Gemini (agy) and runs each installer only when a newer release is available, then prints what changed and the current version of each tool."
+    },
+    {
+      "date": "2026-08-26",
+      "summary": "Zellij web access live on Mjolnir and Sleipnir at https://<host>.z42.work:8082 (c1b8942, bf56bac, 213a0b2): shared config.kdl, per-host --ip/--port/--cert/--key flags in the systemd unit / LaunchAgent (reference copies in launchd/), web client themed Catppuccin Macchiato. Runbook lives outside the repo (MySecondBrain inbox)."
     },
     {
       "date": "2026-07-21",
@@ -48,6 +64,9 @@
     }
   ],
   "recent_decisions": [
+    "2026-09-26: Zellij web_sharing defaults to \"off\" (operator decision), superseding the \"on\" part of the 2026-08-26 web-access decision",
+    "2026-09-26: Agent CLI status lines ship as an agent-cli stow package (scripts only, --no-folding) plus bin/setup-agent-statusline.sh for per-key config upserts; agent configs stay unmanaged",
+    "2026-08-26: Zellij web access uses one shared config.kdl with host-specific settings as CLI flags in each host's service file; secrets stay in ~/.config/lego/env",
     "2026-07-21: Project layout scaffolds use six role-specific tabs: claude, codex, grok, code, tools, and shell; agent tabs stay as plain shells rather than auto-launching CLIs",
     "2026-07-04: Theme switching is a manual toggle command, not OS-appearance- or schedule-driven (user explicitly rejected following desktop mode)",
     "2026-07-04: User-facing commands live in the scripts stow package (scripts/.local/bin -> ~/.local/bin); repo tooling stays in bin/",
@@ -56,5 +75,24 @@
   "blockers": [],
   "discrepancies": [],
   "gate_history": [],
-  "eval_history": []
+  "eval_history": [],
+  "feedback_history": [
+    {
+      "date": "2026-09-26",
+      "approver": "operator",
+      "decision": "accepted",
+      "scope": "Portable agent CLI status lines (8c0480a) and Zellij web_sharing \"off\" default (e21524b)",
+      "features": [],
+      "slices": [],
+      "revision": "e21524b",
+      "decision_record": "docs/decisions.md - 2026-09-26 ACCEPTED entry",
+      "observations": [
+        "Sleipnir: operator verified status lines in new claude/grok/codex sessions",
+        "Sleipnir: bin/check-health.sh 24/24 OK; scratch-HOME setup tests run in-session",
+        "Mjolnir: operator replied \"all good\" to the pull/setup/--check request; command output not shared"
+      ],
+      "deferrals": [],
+      "gate": "none run"
+    }
+  ]
 }
