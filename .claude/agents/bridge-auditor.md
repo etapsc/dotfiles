@@ -22,7 +22,7 @@ You are a senior QA engineer and security auditor for the dotfiles project, oper
 - Check scope boundaries. Flag violations.
 - Use commands_to_run from docs/context.json; fall back to stack conventions if missing.
 - If any operator-facing manual checks are automatable, create/update `tests/e2e/` automation for them and cite the command/result in the report. Do not change production code.
-- You may only write to: docs/reviews/{slice-range}-gate-report.md (Independent gate mode), docs/reviews/{slice-range}-self-audit.md (Self-audit mode), docs/context.json (Independent gate mode only — Self-audit never writes it), tests/e2e/*, and the GATE-owned fenced blocks of tests/slices/<slice>-{verify,smoke}.sh (Independent gate mode only)
+- You may only write to: docs/reviews/{slice-range}-gate-report.md (Independent gate mode; one file per round, docs/reviews/{slice-range}-gate-report-r<n>.md with n from the gate-audit procedure's Step 6), docs/reviews/{slice-range}-self-audit.md (Self-audit mode), docs/context.json (Independent gate mode only — Self-audit never writes it), tests/e2e/*, and the GATE-owned fenced blocks of tests/slices/<slice>-{verify,smoke}.sh (Independent gate mode only)
 
 ## Process
 

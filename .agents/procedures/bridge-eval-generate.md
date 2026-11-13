@@ -6,9 +6,9 @@ description: Generate user test scenarios, E2E tests, and feedback template. Use
 # Evaluation Pack Generation
 
 ## Precondition
-Verify the most recent docs/reviews/{slice-range}-gate-report.md shows PASS. If not, abort and notify.
+Verify the gate report for the range shows PASS, reading the highest round: docs/reviews/{slice-range}-gate-report-r<n>.md with the largest n (a report named docs/reviews/{slice-range}-gate-report.md predates the per-round rule and is its only round). If not, abort and notify.
 
-**Derive the slice range prefix** from the in-scope slices (matching the gate report). Examples: single slice -> `S22`, consecutive range -> `S10-S15`, non-consecutive -> `S10-S12-S15`. Use this prefix for the eval scenarios filename.
+**Derive the slice range prefix** from the in-scope slices (matching the gate report). Examples: single slice -> `S22`, consecutive range -> `S10-S15`, non-consecutive -> `S10-S12_S15` (separate runs join with an underscore; the report ID rule is in the slice-plan procedure's Selection section). Use this prefix for the eval scenarios filename. If the passing gate report is named by a selection's report ID, reuse that ID unchanged, with the gate's exact scope and revision.
 
 Evaluation and acceptance are separate states. Read the latest scoped acceptance
 and explicit deferrals before writing current-state prose. `awaiting_feedback`
@@ -25,7 +25,7 @@ For every scenario:
 - Human-only means real UX judgment, visual polish, external accounts, live credentials, exploratory product feel, or "start a browser and decide whether it feels right".
 - Script every automatable step into `tests/slices/<slice>-eval.sh` as the **actual user-facing scenario commands** — drive the product the way an operator/user would (invoke the real commands/flows named in each scenario's `### Steps:`) and assert the observable outcome of each step. This file MUST NOT merely re-run the project test framework (`bash test.sh` / the unit suite / the integration suite) — re-running the test framework is verify/smoke's job (`tests/slices/<slice>-{verify,smoke}.sh`, owned by producers + gate). Eval drives the product end-to-end as a user.
 - Run the automation when feasible, record the command/result in the eval scenarios file, and pre-check or annotate checklist items that the automation already verified.
-- Leave only human-only checks for the operator to perform manually as prose in `docs/reviews/{slice-range}-eval-scenarios.md` (which is never removed).
+- Leave only human-only checks for the operator in `docs/reviews/{slice-range}-eval-scenarios.md` (which is never removed), each written as a scenario: numbered `### Steps:` like an automatable scenario, plus `**Where:**`, `**Pass looks like:**` and `**Mirrors:**` (the gate report's Human-only checks entry or the `docs/human-playbook.md` row). A paragraph of judgment prose alone is not a scenario.
 
 ### Writing `tests/slices/<slice>-eval.sh`
 
@@ -87,6 +87,22 @@ Project: dotfiles
 
 ---
 
+## Scenario N: [Feature Fxx] - [Human-only]
+**Goal:** [what the operator judges]
+**Where:** [repository and harness]
+**Linked:** [Fxx, ATxx, UFxx]
+**Mirrors:** [the gate report's `## Human-only checks` entry, or the docs/human-playbook.md row]
+
+### Steps:
+1. [Action naming a command, file or UI element] → Expected: [result]
+
+**Pass looks like:** [the observable outcome]
+
+### Checklist:
+- [ ] Performed by the operator; result recorded through $bridge-feedback
+
+---
+
 ## Feedback Form
 
 ### Overall Assessment
@@ -125,7 +141,7 @@ Created: docs/reviews/{slice-range}-eval-scenarios.md ([X] scenarios), tests/sli
 
 HUMAN:
 1. Run automated eval coverage yourself: `make eval` (or `bash tests/slices/<slice>-eval.sh`)
-2. Walk through only the human-only items in docs/reviews/{slice-range}-eval-scenarios.md — do not repeat checks already covered by automation unless you want a spot check
+2. Walk through only the human-only scenarios in docs/reviews/{slice-range}-eval-scenarios.md, named here by ID with their first step: [Scenario N: <first step>; …] — do not repeat checks already covered by automation unless you want a spot check
 3. Actually use the application as a real user would for each human-only scenario
 4. Fill in the feedback form at the bottom of docs/reviews/{slice-range}-eval-scenarios.md
 5. Note any DX friction, performance issues, or "this feels wrong" moments

@@ -1,4 +1,4 @@
-# BRIDGE v3.0.2 — dotfiles
+# BRIDGE v3.5.0 — dotfiles
 
 ## Methodology
 
@@ -7,12 +7,17 @@ BRIDGE = Brainstorm → Requirements → Implementation Design → Develop → G
 ## Canonical Sources (authority ladder)
 
 1. The operator's live word — outranks every document below.
+   - docs/bridge-memory.json (when present) — the operator's standing rules, recorded by bridge-persist. Follow them; the live word still wins.
 2. docs/context.json — as-built truth. If it is stale, fix it.
 3. docs/requirements.json — intent (bridge.v2 schema)
 4. docs/contracts/* and docs/designs/ — schemas/ADRs and approved architecture
 5. docs/conventions.md — folder taxonomy reference (what belongs in each docs/ subdir)
 6. docs/project-knowledge.md — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived docs/project-brief.md
 7. Codebase — ultimate reality. When it disagrees with anything above, update docs/context.json or record the discrepancy. Do not improvise a rescope.
+
+### Older records
+
+`docs/context.json` and `docs/requirements.json` may have archived parts. If a file has `previous_doc`, that is the path (from the repository root) of the next older file, which has the same schema and `"doc_state": "archived"`. Follow the chain when you need an item that is not in the current file, and before allocating a new ID. Write only to the current files; to reopen an archived item, move it back into the current file and delete it from the archive file.
 
 ## Project State and Acceptance
 
@@ -49,7 +54,7 @@ or a new scoped change, preserving the earlier acceptance record.
 - Feature status flow: planned → in-progress → review → done | blocked.
 - No full-repo scans by default. Targeted inspection only.
 - Use stable IDs: Fxx, ATxx, Sxx, UFxx, Rxx.
-- Unknowns → execution.open_questions. Do not invent.
+- Unknowns → execution.open_questions, filed per the Discrepancy Protocol below. Do not invent.
 - No secrets in code. No sensitive data in production logs. OWASP Top 10 awareness.
 - **Every response that presents work output MUST end with a HUMAN: block.** After receiving subagent output, relay the subagent's HUMAN: block verbatim — or compose one if the subagent omitted it. Never summarize subagent results without a HUMAN: block.
 - **Never call the `AskUserQuestion` tool.** All clarifications, decisions, and option choices go in a HUMAN: block per the Human Handoff Protocol below. The deny rule in `.claude/settings.json` enforces this; following it without trying avoids the deny/retry cycle.
@@ -58,6 +63,11 @@ or a new scoped change, preserving the earlier acceptance record.
 
 - Code ≠ context.json → update context.json.
 - Code ≠ requirements.json → record discrepancy in context.json, propose fix, do NOT silently rescope.
+- Someone must decide what we want → an open question in `execution.open_questions`.
+- Two sources disagree, or the product is wrong → a discrepancy in `context.json`; if closing it needs a decision, link one open question and keep the options only there.
+- More than a paragraph → an issue file in `docs/issues/`, named by its ID.
+- A hazard for the next session → a `handoff.watch_out` entry naming its expiry condition; one with no expiry condition is a candidate standing rule — offer it to `bridge-persist` or a `docs/conventions.md` row, never move it automatically.
+- Fields, kinds and status words: `docs/conventions.md`, "Records: what goes where".
 
 ## Human Handoff Protocol
 
@@ -80,7 +90,7 @@ Use subagents for isolated, focused work. The main session acts as orchestrator.
 - **bridge-architect** — design/contracts for current slice. Read-only except docs/contracts/ and docs/decisions.md.
 - **bridge-coder** — implement current slice scope. Small testable increments. Tests satisfy ATxx. No unrelated refactors.
 - **bridge-debugger** — reproduce first, fix root cause, add regression tests. Report: commands → results → files changed.
-- **bridge-auditor** — never fixes code. Verifies ATxx evidence, checks scope, runs quality gates. In Independent gate mode produces docs/reviews/{slice-range}-gate-report.md and the gate_history entry; in Self-audit mode produces docs/reviews/{slice-range}-self-audit.md and writes no context.
+- **bridge-auditor** — never fixes code. Verifies ATxx evidence, checks scope, runs quality gates. In Independent gate mode produces docs/reviews/{slice-range}-gate-report.md (one file per round, docs/reviews/{slice-range}-gate-report-r<n>.md) and the gate_history entry; in Self-audit mode produces docs/reviews/{slice-range}-self-audit.md and writes no context.
 - **bridge-evaluator** — only after gate passes. Generates test scenarios from user perspective. Maps to user_flows and acceptance_tests.
 
 Pass only relevant context when delegating: relevant JSON slices + file paths, not the whole repo.

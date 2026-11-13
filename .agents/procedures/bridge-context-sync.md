@@ -81,10 +81,62 @@ canonical and append-only. The context list is a pointer, not a log — when it
 exceeds five entries, drop the oldest and confirm the dropped ones are in
 `docs/decisions.md` first. If one is missing there, append it before dropping it.
 
-**`handoff.watch_out` entries expire.** Each entry belongs to live work. When the
-feature or slice it warns about closes, remove it in the same pass. A warning
-about something that closed months ago is noise that crowds out the ones that
-still matter.
+**`handoff.watch_out` entries expire with their hazard.** Each entry names what it warns
+about and the condition that retires it: an item closing, an observation being recorded, a
+revision no longer read by any check. Remove it in the pass where that condition is met,
+whether or not the feature is done. An entry that names no expiry condition is a candidate
+standing rule: offer it to `bridge-persist` or a `docs/conventions.md` row; never move it
+automatically.
+
+## Records (both paths)
+
+A discrepancy is pasted whole into `discrepancies`; empty values stay `null`, `[]` or `""`.
+`kind`: `code-vs-requirements`, `code-vs-context`, `docs-vs-code`, `defect`, `process`.
+`status`: `open`, `resolved`, `wont-fix`, `superseded`; the date goes in `resolved_on`, the
+reason in `resolution`. Keep `summary` to two sentences; detail goes to the issue file named
+in `links.issue_file`.
+
+```json
+{
+  "id": "Dnn",
+  "kind": "code-vs-requirements|code-vs-context|docs-vs-code|defect|process",
+  "status": "open|resolved|wont-fix|superseded",
+  "opened": "YYYY-MM-DD",
+  "observed_revision": "<sha>",
+  "summary": "",
+  "evidence_paths": [],
+  "proposed_fix": "",
+  "resolved_on": null,
+  "resolution": null,
+  "owner_repo": null,
+  "cross_repo": [],
+  "links": { "oq": [], "features": [], "issue_file": null, "findings": [] }
+}
+```
+
+An open question goes in `docs/requirements.json` `execution.open_questions`; this skill may
+add one (the conventions row allows it) and touches nothing else in that file. `status`:
+`open`, `answered`, `withdrawn`; `decision_pointer` is `docs/decisions.md#<anchor>`.
+
+```json
+{ "id": "OQnn", "topic": "", "status": "open|answered|withdrawn", "default": "", "answered_on": null, "decision_pointer": null }
+```
+
+Which record an item becomes: the entrypoint's Discrepancy Protocol and `docs/conventions.md`,
+"Records: what goes where".
+
+## Record checks (both paths, before the sync report)
+
+Read `discrepancies`, `execution.open_questions`, `handoff.watch_out`, `blockers` (a missing
+key is empty) and `docs/issues/` when it exists. Report in the sync report:
+
+- an ID that repeats across the current file and its `previous_doc` chain;
+- a `links` target (`oq`, `features`, `issue_file`, `findings`) or `decision_pointer` whose target does not exist;
+- a `docs/issues/` file whose ID has no entry, or whose `**Status:**` line differs from the entry's `status`;
+- a `kind` or `status` outside the vocabulary;
+- a `watch_out` entry that names no expiry condition.
+
+Findings go in the sync report only; this step changes no record. The operator decides.
 
 ## Project Knowledge (docs/project-knowledge.md)
 
@@ -92,6 +144,7 @@ Run in BOTH paths above, before the final output/summary step. `docs/project-kno
 
 - The operator MAY pass source pointers when invoking bridge-context: README, PRD, wiki export, files under docs/, or arbitrary description text.
 - Sources given: read them plus targeted code inspection of THIS repo only. Fill the matching skeleton sections, then append each ingested source with a date to the Ingested Sources provenance table.
+- Known Unknowns: classify each item the sources leave open before filing it. A factual gap the sources did not answer stays a plain line with no ID until a source answers it. A question only the operator can decide becomes an open question. A disagreement between the documents and the code becomes a discrepancy of kind `docs-vs-code`. Write the ledger entry first, then append its ID and one line to Known Unknowns. The file holds no status: never edit a status there; the entry carries it. Digest finding labels stay local to their digest and are cited as `<digest-file>#<label>` in `links.findings`.
 - NO sources given: on create, fill what targeted code inspection alone supports (or leave the skeleton placeholders); on update, do NOT touch the file — an explicit no-op. Either way the context.json flow proceeds; this step never fails or blocks it.
 - Refresh discipline: the file is operator-owned after first fill. Touch it only when the operator supplies new sources or explicitly requests a refresh. Refresh ONLY the affected sections and report what changed in the output summary. NEVER regenerate or silently overwrite the whole file.
 - Workspace boundary: operate on THIS project's own docs/project-knowledge.md only — never scan or write another repo's docs. If the template file is absent, note it and skip (no-op).

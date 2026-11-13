@@ -55,31 +55,6 @@ directory, and leaves everything else to Claude's normal permission flow.
 }
 ```
 
-### PostToolUse: Auto-lint after file edits
-
-Runs `post-edit-lint.sh` after Claude edits or writes files. Reads the
-lint command from `docs/context.json` → `commands_to_run.lint` and falls
-back to common defaults.
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-lint.sh\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
 ## Available Hook Events
 
 | Event | When it fires | Matcher input |

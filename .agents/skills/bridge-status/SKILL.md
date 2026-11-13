@@ -3,7 +3,7 @@ name: Bridge Status
 description: Generate or refresh docs/STATUS.md — a human-readable engineering status log for the project owner and contributors. Invoke with $bridge-status in your prompt.
 ---
 
-You are generating a STATUS document for in-team consumption. This is a living engineering log: per-version milestones, in-flight branches, test/quality numbers, known issues, open questions, and what's next. It is NOT the same as `docs/project-brief.md` — that one is an external-agent handoff. STATUS is the internal status board.
+You are generating a STATUS document for in-team consumption. This is a living engineering log: the facts of the latest version, what's next, per-version milestones, test/quality numbers, known issues and open questions; branches in flight appear when there are any. It is NOT the same as `docs/project-brief.md` — that one is an external-agent handoff. STATUS is the internal status board.
 
 ## When to Use This Skill vs $bridge-project-brief
 
@@ -37,10 +37,16 @@ Read these in order:
 
 1. `docs/context.json` — feature status, slice history, gate history, eval history, handoff, watch-outs, parallel-track state if present
 2. `docs/requirements.json` — features, acceptance tests, scope, recommended slices, open questions
-3. `docs/contracts/*` — schemas/ADRs (if present, list them in the milestones table)
-4. `docs/decisions.md` — architectural decision log (if present, surface relevant items in Open Questions)
+3. `docs/contracts/*` — schemas/ADRs (if present, name the current ones in the version table that delivered them)
+4. `docs/decisions.md` — scoped acceptance, publication and reopening records (link them from the Accepted cells, the tag lines and Known Open Issues; surface open items in Open Questions)
 5. `.bridge-version` — current version marker
-6. Repo `git status` output — for In-Flight Branches section (current branch, dirty files, recent branches)
+6. Git reads, for the Snapshot line, the Facts table, Version Milestones and In-Flight Branches:
+   - tags and their commits: `git tag --sort=-creatordate` (or equivalent) and `git rev-list -1 <tag>`
+   - the default-branch log for each version range: `git log <prev-tag>..<tag> --merges`, reading pull-request merge subjects (`Merge pull request #nnn`); `gh pr list --state merged` when `gh` is installed
+   - the default branch, resolved by name and never read from the checked-out `HEAD`: `git symbolic-ref --short refs/remotes/origin/HEAD` (strip `origin/`), falling back to a local `main` or `master` that exists; its tip with `git rev-parse <default-branch>`; equal to, ahead of or behind its remote with `git rev-list --left-right --count <default-branch>...origin/<default-branch>`. When no default branch can be identified, or it has no remote counterpart, the Snapshot line says `unknown` for the missing part; a checked-out topic branch's tip is never labelled the default-branch tip
+   - branch tips and unmerged commits: `git branch -a`, `git log -1 <branch>`, `git log <default-branch>..<branch>`, and each branch's latest pull request (merge subjects or `gh pr list --head <branch> --state all` when `gh` is installed: `gh` lists open pull requests only by default, so ask for all states and select the most recent; `unknown` when the lookup cannot run)
+
+Read the current `docs/requirements.json` and `docs/context.json`. For a Complete version whose features or slices are no longer in the current files, make a targeted `previous_doc` read into `docs/archive/` for those IDs only, so an older milestone table keeps its recorded evidence instead of repeating stale prose; never scan the archive for anything else.
 
 ## Architecture Scan (lightweight)
 
@@ -55,61 +61,87 @@ Do NOT read source code. STATUS is a state report, not an architecture analysis 
 
 Write the complete document to `docs/STATUS.md`. If the file already exists, overwrite it entirely — this is a derived artifact, not a place for durable manual notes.
 
-Use this section structure:
+Use this section structure, in this order:
 
 ```markdown
 # [project name] — Project Status
 
 Last updated: [today's date]
 Version: [from .bridge-version or requirements.json project.version]
-Source of truth: docs/context.json (feature status), docs/requirements.json (intent)
+Source of truth: docs/context.json (as-built state and evidence), docs/requirements.json (intent), scoped operator decisions in docs/decisions.md
+Snapshot: [default branch] at [current default-branch commit], [equal to | ahead of | behind | unknown] [origin/<default branch>], when this report was written
 
-[One-paragraph project summary — what it is, who it's for, current direction]
+[One-paragraph project summary — what it is, who it's for, the latest release, current direction]
 
-[State table: Delivery/acceptance and decision pointer | Gate verdict and revision |
-Automated evaluation | Live evaluation and deferrals | Tag/publication evidence.
-Use "unknown/not recorded" for absent evidence, never infer one row from another.]
+| Fact | State |
+|------|-------|
+| Latest version | [The latest released version, its tag commit, and the latest pull request merged between the previous tag and that tag — number and merge commit. `none in this range` when the range has no pull-request merge. `unknown` when the lookup cannot run (no tags, shallow clone, no merge history). This row never names the default-branch tip; that stays on the Snapshot line.] |
+| Delivery / acceptance | [Accepted scope and its decision pointers; point to the version tables for the per-feature records] |
+| Gate | [Latest gate verdict with revision and date; where each version's gate is recorded] |
+| Automated evaluation | [Latest automated evaluation result and date; per version below] |
+| Live evaluation | [Unobserved live work and deferrals, per version below; automated checks never stand in for it] |
+| Publication | [Tag and release evidence of the latest version; earlier publications under each version] |
+
+[The Facts table reports delivery, gate, automated evaluation, live evaluation and publication as separate rows. Use "unknown/not recorded" for absent evidence; never infer one row from another.]
 
 ## In-Flight Branches
 
-[Cross-branch coordination section. ALWAYS render this section.]
+[Conditional. Render this section only when a non-default branch carries unmerged commits toward a feature that is not done (planned, in-progress, review or blocked); use `context.json.parallel_tracks` and the branch tips. Parked reference branches named under Withdrawn or retired are excluded. So is the `bridge-ids` counter branch of `docs/bridge-ids.conf`, local or remote: it holds reserved ID numbers, never feature work. List the candidates with `git branch -a --no-merged <default-branch> --format='%(refname)' | grep -v -x -e refs/heads/bridge-ids -e 'refs/remotes/[^/]*/bridge-ids'`. When the list is empty, the section is omitted entirely: no heading, no placeholder.]
 
-[If `context.json.parallel_tracks` exists OR `git branch` shows multiple non-master branches with recent activity:
-  - One paragraph per active branch
-  - Format: `branch-name (since YYYY-MM-DD): one-line goal. Key deliverables: ... Guardrails: ... Plan: docs/plans/...`
-]
+[One entry per branch in flight. Each entry opens with the branch name, its tip commit and its latest pull request (number and state, `none`, or `unknown`), then since-date, goal, deliverables, guardrails and plan path:
+`branch-name` at `<tip commit>`, PR #nnn (open | merged | closed) | PR none | PR unknown (since YYYY-MM-DD): one-line goal. Key deliverables: ... Guardrails: ... Plan: docs/plans/...]
 
-[If no parallel tracks and only the default branch is active:
-  - Render exactly: `No active branches. Work is happening on master/main only.`
-]
+## What's Next
+
+Next slice: [from context.json.next_slice or the first planned slice in execution.recommended_slices; "none" when nothing is planned]
+
+[Bullet list of upcoming work and of what waits on the operator]
+
+### Post-[latest version] — Not done
+
+[Planned and in-progress features and slices after the latest release. An empty table when nothing is planned.]
+
+| ID | Covers | Title | Disposition | Status |
+|----|--------|-------|-------------|--------|
+| Fxx | Sxx | ... | ... | planned |
+
+### Ideas and Proposals (not scheduled)
+
+[Open proposals, ideas and optional follow-ups from docs/proposals/ and docs/ideas/, plus where the archived ones live. None of these is planned work.]
+
+| Item | Kind | State |
+|------|------|-------|
+| ... | ... | ... |
 
 ## Version Milestones
 
-[One subsection per release/version line that has shipped or is planned. Use the slice history + feature status to group.]
+[One subsection per version, latest at the top and oldest at the bottom. Each feature or slice row carries its shipped scope, acceptance record, gate, automated evaluation, unobserved live work and status. A feature that shipped scope in several versions has a row in each. For a Complete version whose IDs are archived, the row's evidence comes from the targeted previous_doc read.]
 
-### v[X.Y.Z] (label) — [Complete | In Progress | Planned]
+### v[X.Y.Z] (published [date]) — [Complete | In Progress | Planned]
 
 [Optional 1-2 sentence summary of what this version delivers]
 
-| Feature | Slice | Title | Key Deliverables | Status |
-|---------|-------|-------|------------------|--------|
-| Fxx | Sxx | ... | ... | done |
+| Feature | Slice | Scope shipped | Accepted | Gate | Automated eval | Unobserved live work | Status |
+|---------|-------|---------------|----------|------|----------------|----------------------|--------|
+| Fxx | Sxx | ... | [acceptance record] | [verdict, date, report] | [result, date] | [UFxx or —] | done |
 
-Slices [DONE | IN PROGRESS | PLANNED]: Sxx-Syy
-[Optional: brief evidence pointer, e.g. "All gates PASS"]
+Tag v[X.Y.Z] → [tag commit]. [Release checks and record links; "not tagged" for a version without a tag.]
 
-## Workspace Examples
+### Withdrawn or retired — Not done
 
-[If `workspaces/` directory exists in repo, list each workspace with one-line description.
- If no workspaces directory, render: "No workspace examples in this repo."]
+[Removed features and slices with their disposition and parked branches; the IDs stay allocated and are never reused. "None." when nothing was withdrawn.]
+
+| ID | Covers | Title | Disposition | Status |
+|----|--------|-------|-------------|--------|
+| Fxx | Sxx | ... | ... | removed |
 
 ## Test & Quality Summary
 
 [Pull from context.json.commands_to_run if present. Run nothing — report the LAST KNOWN values from gate_history or context.json. If unavailable, render the row with "(run [command] to populate)".]
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Smoke tests | ... | from context.json or last gate report |
+| Metric | Last-known value | Scope / command |
+|--------|------------------|-----------------|
+| Smoke tests | ... | from context.json or the last gate report (its highest round file) |
 | E2E tests | ... | |
 | Eval validator | ... | from validate-eval-scenarios.sh last run |
 | Lint / typecheck | ... | "(not configured)" if absent |
@@ -118,9 +150,11 @@ Slices [DONE | IN PROGRESS | PLANNED]: Sxx-Syy
 
 ## Known Open Issues
 
-[Source: unresolved findings from the latest applicable gate for each scope, reconciled with later decisions, plus execution.open_questions. Preserve each finding's recorded severity; label operator-deferred follow-ups separately. Do not resurrect resolved historical blockers or upgrade warnings into acceptance blockers. Cite the requirement or operator decision for every current blocker.]
+[Source: unresolved findings from the latest applicable gate for each scope (the highest round of its report), reconciled with later decisions, plus recorded discrepancies. Preserve each finding's recorded severity; label operator-deferred follow-ups separately. Do not resurrect resolved historical blockers or upgrade warnings into acceptance blockers. Cite the requirement or operator decision for every current blocker.]
 
-- [severity] [issue text] (from gate YYYY-MM-DD or OQxx)
+| Version | Source | Severity | Finding |
+|---------|--------|----------|---------|
+| v[X.Y.Z] | [gate report Wn, context.json Dnn, ...] | [recorded severity] | ... |
 
 ## Open Questions
 
@@ -129,21 +163,16 @@ Slices [DONE | IN PROGRESS | PLANNED]: Sxx-Syy
 | ID | Topic | Status | Notes |
 |----|-------|--------|-------|
 | OQ01 | ... | open/closed | ... |
-
-## What's Next
-
-Next slice: [from context.json.next_slice or first planned slice in execution.recommended_slices]
-
-[Bullet list of upcoming work, grouped by version target if multiple]
 ```
 
 ## Output Constraints
 
 - **No word cap.** This is an engineering log; thoroughness beats brevity.
 - **Tone:** Factual, log-style. Read like a project owner's status board.
-- **Worktree drift INCLUDED.** Unlike project-brief, STATUS may reference uncommitted work, in-flight branches, and pending PRs. Pull from `git status` and `context.json.parallel_tracks` if present.
-- **Fall back to placeholders, never invent.** Use "not yet documented", "not configured", or "(run [cmd] to populate)" rather than guessing values.
-- **Always render every section.** Even if empty, render the heading + a placeholder line. Predictable structure makes downstream tooling easier.
+- **Worktree drift INCLUDED.** Unlike project-brief, STATUS may reference uncommitted work, in-flight branches, and pending PRs. Pull from `git status`, the branch tips and `context.json.parallel_tracks` if present.
+- **Fall back to placeholders, never invent.** Use "not yet documented", "not configured", or "(run [cmd] to populate)" rather than guessing values. A pull-request lookup that cannot run says `unknown`, never `none`.
+- **Render every section except In-Flight Branches.** Even if empty, render the heading + a placeholder line (an empty table where the template shows one). In-Flight Branches is omitted when no branch is in flight. Predictable structure makes downstream tooling easier.
+- **Run nothing.** Report the LAST KNOWN values from the records; this is a state report and it runs no test, build or check.
 - **No source code reading.** STATUS is state, not architecture.
 
 ## Required Closing (do not omit)

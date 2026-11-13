@@ -16,6 +16,7 @@ The user is providing a design document — this could be a PRD, feature spec, a
 3. Load docs/decisions.md — note existing architectural decisions
 4. Run `git log --oneline -20` to understand recent activity
 5. Targeted code inspection of areas the design will affect
+6. If `docs/bridge-ids.conf` exists, this repository reserves IDs on its `bridge-ids` counter branch: before writing any numbered record (Fxx, ATxx, Sxx, UFxx, Rxx, OQxx), reserve the IDs with `.bridge/tools/reserve-ids.sh` (for example `bash .bridge/tools/reserve-ids.sh F=1 AT=3 S=1 -m "<title>"`, naming only the series you need) and use exactly the IDs it prints. Reserve what you expect; if you come up short, reserve more; unused numbers stay burned and are never reused. If the script exits non-zero, write no numbered record and show the operator its message. Without `docs/bridge-ids.conf`, allocate highest+1 as the rest of this procedure describes.
 
 ### Step 2: Analyze the Design Document
 
@@ -106,7 +107,7 @@ Apply changes by category:
 - NEVER overwrite or remove existing features, acceptance tests, or slices
 - NEVER reuse existing IDs
 - Preserve all existing progress and evidence
-- If the design conflicts with existing scope, add to execution.open_questions — do not resolve silently
+- If the design conflicts with existing scope, add to execution.open_questions — do not resolve silently. An open question is an object: `id`, `topic`, `status` (`open`), `default`, `answered_on` and `decision_pointer` (`null` until answered).
 - Update scope.in_scope if project scope has expanded
 
 ### Step 6: Update docs/context.json

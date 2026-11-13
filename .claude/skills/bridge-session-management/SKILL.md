@@ -15,6 +15,10 @@ live eval and publication separately. Older `review` notes and non-blocking
 warnings cannot override a later acceptance. Re-entry is read-only; surface any
 remaining contradiction and its authoritative decision without repairing files.
 
+If `docs/bridge-memory.json` exists, list its current rules in the STANDING RULES
+block, one line each (id and rule, shortened if long); omit the block when the
+file is absent. Follow them this session; the operator's live word still wins.
+
 Output brief:
 
 ```
@@ -27,6 +31,9 @@ HANDOFF:
 └─ Stopped at: [handoff.stopped_at]
 └─ Next: [handoff.next_immediate]
 └─ Watch out: [handoff.watch_out]
+
+STANDING RULES (docs/bridge-memory.json):
+[D-CONV-n] [rule]
 
 FEATURE STATUS:
 ✓ Done: [Fxx list]
@@ -87,12 +94,16 @@ Then STOP and wait.
    - next_slice
 3. Append other decisions to docs/decisions.md (YYYY-MM-DD: [Decision] - [Rationale]); do not duplicate acceptance already recorded.
 4. Output summary: accomplished, remaining, blockers. Separate deferred follow-ups from acceptance blockers and report the current Git state rather than copying old handoff prose.
-5. End with:
+5. If the session learned standing operator rules, conventions or lessons that
+   `docs/bridge-memory.json` does not hold yet, offer `/bridge-persist` in the
+   HUMAN block. Only offer it; never run it as part of wrap-up.
+6. End with:
 
 ```
 HUMAN:
 1. Before closing: run [test/lint commands] to confirm session state
 2. Review context.json handoff — does it match your understanding?
 3. Before next session, decide: [any open questions that surfaced]
-4. Next session: /bridge-resume
+4. (Only if offered) Save this session's standing rules: /bridge-persist
+5. Next session: /bridge-resume
 ```

@@ -59,7 +59,7 @@ Before checking anything:
    W=.claude/worktrees/gate-<slice-range>
 
    # 1. the report
-   cp "$W/docs/reviews/<slice-range>-gate-report.md" docs/reviews/
+   cp "$W/docs/reviews/<slice-range>-gate-report-r<n>.md" docs/reviews/
 
    # 2. the gate_history entry  — port by hand into the main docs/context.json
    # 3. the ATxx evidence records — port by hand into the main docs/context.json
@@ -70,7 +70,7 @@ Before checking anything:
    git -C "$W" diff -- tests/slices/
 
    # verify the transfer BEFORE destroying anything
-   diff "$W/docs/reviews/<slice-range>-gate-report.md" "docs/reviews/<slice-range>-gate-report.md"
+   diff "$W/docs/reviews/<slice-range>-gate-report-r<n>.md" "docs/reviews/<slice-range>-gate-report-r<n>.md"
    git diff --stat -- docs/context.json tests/slices/    # your ported changes, in the main checkout
 
    # only now: reset tracked files AND remove untracked ones, or removal still fails
@@ -126,7 +126,9 @@ If the selected scope is empty, say so and stop; do not silently widen it.
 
 Load quality_gates thresholds from docs/requirements.json.
 
-**Derive the slice range prefix** from the in-scope slices for use in the gate report filename. Examples: single slice -> `S22`, consecutive range -> `S10-S15`, non-consecutive -> `S10-S12-S15`. Use this prefix for the gate report filename in Step 5.
+**Derive the slice range prefix** from the in-scope slices for use in the gate report filename. Examples: single slice -> `S22`, consecutive range -> `S10-S15`, non-consecutive -> `S10-S12_S15`. This is the report ID rule in the slice-plan procedure's Selection section: consecutive runs collapse to first-last with a hyphen, separate runs join with an underscore. Use this prefix for the gate report filename in Step 5.
+
+With a selection (Selection in the slice-plan procedure), the prefix is its report ID: consecutive runs collapse to first-last joined by a hyphen, separate runs join with an underscore. Judge exactly the selection's slices and their ATs; other `review` features stay out of scope.
 
 ## Step 2: Run Checks
 
@@ -140,6 +142,13 @@ Execute using commands_to_run from context.json:
 ```
 
 If a command is missing, attempt stack convention and note the gap.
+
+Read the producer's recorded `make ledger-check` output from the request (the Producer
+evidence line of `docs/reviews/{slice-range}-ready-to-audit.md`) and re-run
+`bash tests/ledger-check.sh <slices>` in the worktree when the script is present. A failing
+ledger-check (docs/context.json over 212 KiB, recent_decisions over 5, handoff.watch_out over 20,
+or a selected slice without a non-empty verify or smoke script) is a warning that names the fix,
+never a blocking issue; the product checks above decide PASS or FAIL.
 
 ## Step 3: Evaluate
 Per check: PASS (meets threshold) | FAIL (blocking) | WARN (non-blocking)
@@ -181,16 +190,21 @@ Before writing the report, inspect any manual verification instructions you are 
   - Do NOT create or write `tests/e2e/<slice>-manual-automation.sh`. The gate writes ONLY into its own gate-owned fence; the producer (Code/Debug mode) owns the DISTINCT `producer (managed)` fence in the same files — never touch the producer block, the header, or the trailer.
   - If a per-slice file does not yet exist, create it from the skeleton in `.bridge/fence-template.txt`, then fill the gate block. If it exists but lacks the gate markers, insert the gate fence once (immediately after the producer block), then fill it. On re-run, rewrite ONLY the lines between your gate markers in place — never duplicate the block or its commands.
   - Wrap each check with `bridge_run "<label>" <cmd...>` from `.bridge/lib/runner-lib.sh` so `bridge_summary` aggregates pass/fail.
-- Human-only checks (subjective UX, external accounts, live credentials, exploratory product feel) STAY as prose in `docs/reviews/{slice-range}-gate-report.md`; do NOT script them.
+- Human-only checks (subjective UX, external accounts, live credentials, exploratory product feel) STAY in `docs/reviews/{slice-range}-gate-report.md`, under `## Human-only checks`, each written as an instruction: what it observes (UFxx/ATxx), Where, numbered Steps that each name a command, file or action, Pass looks like, and the `docs/human-playbook.md` row it mirrors. Copy that row's steps when one exists. A judgment phrase alone ("human understanding", "readability") is not a check. Do NOT script them.
 - Run the automation when feasible (`bash tests/slices/<slice>-verify.sh`, `bash tests/slices/<slice>-smoke.sh`, or `make test-slice SLICE=<slice>`) and cite the command/result in the gate report.
 - Do not leave the operator with a long copy/paste command list when those commands can be scripted.
 
 ## Step 6: Generate the report
 
 Self-audit mode writes `docs/reviews/{slice-range}-self-audit.md` with the
-SELF-AUDIT header from Step 0. Independent gate mode writes
-`docs/reviews/{slice-range}-gate-report.md` with the GATE provenance block.
-The structure below is the same for both.
+SELF-AUDIT header from Step 0. Independent gate mode writes one file per round:
+`docs/reviews/{slice-range}-gate-report-r<n>.md`, where n is the number of the last
+row of the request log in `docs/reviews/{slice-range}-ready-to-audit.md`, or 1 when
+the gate runs without a Relay request. A later round never edits or replaces an
+earlier round's file, and no file named `{slice-range}-gate-report.md` is written.
+Everywhere else in this procedure, `docs/reviews/{slice-range}-gate-report.md`
+stands for the current round's file. The structure below is the same for both,
+and it opens with the GATE provenance block in Independent gate mode.
 
 ### docs/reviews/{slice-range}-gate-report.md
 
@@ -218,8 +232,20 @@ Features Audited: [Fxx list]
 |---------|-------|-----------|----------|--------|
 
 ## Automation Coverage
-| Manual Area | Gate-Fence Script / Command (tests/slices/<slice>-*.sh) | Human-Only Remainder | Status |
-|-------------|---------------------------------------------------------|----------------------|--------|
+| Manual Area | Gate-Fence Script / Command (tests/slices/<slice>-*.sh) | Human-only check (entry heading below, or none) | Status |
+|-------------|---------------------------------------------------------|-------------------------------------------------|--------|
+
+## Human-only checks
+
+[One entry per check the automation cannot perform; the single word `none` when there is none. Each entry is an instruction the operator can follow without reading anything else.]
+
+### [Short name] — observes [UFxx / ATxx]
+- **Where:** [repository and harness]
+- **Steps:**
+  1. [Action naming a command, file or UI element]
+  2. [...]
+- **Pass looks like:** [the observable outcome]
+- **Playbook row:** [the docs/human-playbook.md row this mirrors, or none]
 
 ## Blocking Issues
 1. [Issue + file:line]
@@ -229,6 +255,8 @@ Features Audited: [Fxx list]
 
 ## Recommended Actions
 1. [Specific fix]
+
+Decision required: [none — or, when Human-only checks lists anything: perform the Human-only checks first, or accept with them recorded as deferred through /bridge-feedback or $bridge-feedback]
 ```
 
 ## Step 7: Update Context — Independent gate mode ONLY
@@ -279,7 +307,7 @@ HUMAN:
 HUMAN:
 1. Review docs/reviews/{slice-range}-gate-report.md — do the cited file:line evidence rows match? (Re-run any command yourself only if you suspect environment drift.)
 2. Check the provenance block: is the revision, checkout state and independence verdict what you expected?
-3. Manually check only the human-only scenarios listed in the report (subjective UX, external accounts, live credentials).
+3. Perform the checks under `## Human-only checks` in the report, or accept with them recorded as deferred; nothing else is manual.
 4. [If PASS] Run: $bridge-eval
 5. [If FAIL] Confirm the blocking issues, then feed fix instructions back.
 ```

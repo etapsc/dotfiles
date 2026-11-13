@@ -14,6 +14,7 @@ Based on the scope output from $bridge-scope (or the description provided below)
 1. Load docs/requirements.json — note the HIGHEST existing IDs (e.g., if F12 exists, new features start at F13)
 2. Load docs/context.json — note current feature_status, active slices, and commands_to_run
 3. If neither exists, treat this as a fresh setup and create both from scratch (fall back to $bridge-requirements behavior)
+4. If `docs/bridge-ids.conf` exists, this repository reserves IDs on its `bridge-ids` counter branch: before writing any numbered record (Fxx, ATxx, Sxx, UFxx, Rxx, OQxx), reserve the IDs with `.bridge/tools/reserve-ids.sh` (for example `bash .bridge/tools/reserve-ids.sh F=1 AT=3 S=1 -m "<title>"`, naming only the series you need) and use exactly the IDs it prints. Reserve what you expect; if you come up short, reserve more; unused numbers stay burned and are never reused. If the script exits non-zero, write no numbered record and show the operator its message. Without `docs/bridge-ids.conf`, allocate highest+1 as the rest of this procedure describes.
 
 ### Step 1b: Identify the Operator-Selected Option
 
@@ -77,7 +78,7 @@ APPEND to the existing file — do NOT overwrite existing features, slices, or o
 - Add new features to the `features` array
 - Add new slices to `execution.recommended_slices`
 - Add new user flows to `user_flows` if applicable
-- Add any new open questions to `execution.open_questions`
+- Add any new open questions to `execution.open_questions` as objects: `id`, `topic`, `status` (`open`), `default`, `answered_on` and `decision_pointer` (`null` until answered); see `docs/conventions.md`, Records
 - Add any new risks to `execution.risks`
 - Update `scope.in_scope` if the project scope has expanded
 - Do NOT modify existing features, acceptance tests, or slices unless explicitly asked

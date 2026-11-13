@@ -1,4 +1,4 @@
-# BRIDGE v3.0.2 — dotfiles
+# BRIDGE v3.5.0 — dotfiles
 
 ## Methodology
 
@@ -9,12 +9,17 @@ A structured methodology for solo-preneur software development with AI coding ag
 ## Canonical Sources (authority ladder)
 
 1. The operator's live word — outranks every document below.
+   - `docs/bridge-memory.json` (when present) — the operator's standing rules, recorded by `bridge-persist`. Follow them; the live word still wins.
 2. `docs/context.json` — as-built truth. If it is stale, fix it.
 3. `docs/requirements.json` — intent (bridge.v2 schema)
 4. `docs/contracts/*` and `docs/designs/` — schemas/ADRs and approved architecture
 5. `docs/conventions.md` — folder taxonomy reference (what belongs in each `docs/` subdir)
 6. `docs/project-knowledge.md` — input-side project knowledge (domain, architecture, doc index) filled from existing docs + code; distinct from the derived `docs/project-brief.md`
 7. Codebase — ultimate reality. When it disagrees with anything above, update `docs/context.json` or record the discrepancy. Do not improvise a rescope.
+
+### Older records
+
+`docs/context.json` and `docs/requirements.json` may have archived parts. If a file has `previous_doc`, that is the path (from the repository root) of the next older file, which has the same schema and `"doc_state": "archived"`. Follow the chain when you need an item that is not in the current file, and before allocating a new ID. Write only to the current files; to reopen an archived item, move it back into the current file and delete it from the archive file.
 
 ## Project State and Acceptance
 
@@ -51,7 +56,7 @@ or a new scoped change, preserving the earlier acceptance record.
 - Feature status flow: `planned → in-progress → review → done | blocked`.
 - No full-repo scans by default. Targeted inspection only.
 - Use stable IDs: Fxx, ATxx, Sxx, UFxx, Rxx.
-- Unknowns → `execution.open_questions`. Do not invent.
+- Unknowns → `execution.open_questions`, filed per the Discrepancy Protocol below. Do not invent.
 - No secrets in code. No sensitive data in production logs. OWASP Top 10 awareness.
 - **Every response that presents work output MUST end with a HUMAN: block.** After following a procedure, ensure your response includes the procedure's HUMAN: block. If the procedure omitted one, compose your own with verification steps and next actions.
 
@@ -59,6 +64,11 @@ or a new scoped change, preserving the earlier acceptance record.
 
 - Code ≠ context.json → update context.json.
 - Code ≠ requirements.json → record discrepancy in context.json, propose fix, do NOT silently rescope.
+- Someone must decide what we want → an open question in `execution.open_questions`.
+- Two sources disagree, or the product is wrong → a discrepancy in `context.json`; if closing it needs a decision, link one open question and keep the options only there.
+- More than a paragraph → an issue file in `docs/issues/`, named by its ID.
+- A hazard for the next session → a `handoff.watch_out` entry naming its expiry condition; one with no expiry condition is a candidate standing rule — offer it to `bridge-persist` or a `docs/conventions.md` row, never move it automatically.
+- Fields, kinds and status words: `docs/conventions.md`, "Records: what goes where".
 
 ## Human Handoff Protocol
 
@@ -95,6 +105,7 @@ This pack runs the workflow through role switching inside the main agent: adopt 
 - Produce only what current slice needs. No speculative design.
 - Contracts → `docs/contracts/`. Decisions → `docs/decisions.md`.
 - Minimal, explicit interfaces. Brief tradeoff notes.
+- End the design summary, directly before the HUMAN block, with the cost comparison (heading `### Cost comparison`): one row for the proposed design and one for the simplest alternative that meets the acceptance tests; columns Lines of new code, Lines of new tests, New files, New records, New rules. The operator's decision in `docs/decisions.md` names the chosen row. Before asking for the row, write the design and the gaps you found to a file under `docs/designs/` and cite its path next to the table and in the HUMAN block.
 
 ### Code Mode
 - Implement only current slice scope.
@@ -165,10 +176,10 @@ Wrap each check with `bridge_run "<label>" <cmd...>` so `bridge_summary` aggrega
 - Use `commands_to_run` from `docs/context.json`.
 - If operator-facing manual checks are automatable by shell/API/file inspection/browser automation, APPEND them into the GATE-owned fence (`# >>> BRIDGE slice <slice> gate (managed) >>>` … `<<<`) of `tests/slices/<slice>-verify.sh` / `tests/slices/<slice>-smoke.sh`, rewriting in place. Do NOT write `tests/e2e/<slice>-manual-automation.sh`. Cite the command/result in the gate report. (See AGENTS.md "Per-Slice Verification Scaffolding" for the marker spec; the producer owns the distinct `producer (managed)` fence — never touch it.)
 - Leave only human-only checks (subjective UX, external accounts, live credentials, exploratory feel) as prose for the operator in the gate report.
-- Write only to, and only what the selected mode permits: **Independent gate** — `docs/reviews/{slice-range}-gate-report.md`, `docs/context.json` (gate_history + ATxx evidence), and the GATE-owned fence of `tests/slices/<slice>-{verify,smoke}.sh`. **Self-audit** — `docs/reviews/{slice-range}-self-audit.md` and nothing else: no context write, no fence, no status.
+- Write only to, and only what the selected mode permits: **Independent gate** — `docs/reviews/{slice-range}-gate-report.md` (one file per round, `docs/reviews/{slice-range}-gate-report-r<n>.md`), `docs/context.json` (gate_history + ATxx evidence), and the GATE-owned fence of `tests/slices/<slice>-{verify,smoke}.sh`. **Self-audit** — `docs/reviews/{slice-range}-self-audit.md` and nothing else: no context write, no fence, no status.
 
 ### Evaluate Mode
-- Only run after gate passes (verify `docs/reviews/{slice-range}-gate-report.md`).
+- Only run after gate passes (verify the highest round of `docs/reviews/{slice-range}-gate-report.md`, the `-r<n>.md` file with the largest n).
 - Generate from user perspective. Map to user_flows and acceptance_tests.
 - Script automatable scenario steps into `tests/slices/<slice>-eval.sh` as the actual user-facing scenario commands (drive the product as an operator would; assert observable outcomes). It MUST NOT merely re-run the project test framework (`bash test.sh` / unit / integration) — that is verify/smoke's job. Use the `eval (managed)` fence; rewrite in place. Human-only checks stay prose in the eval-scenarios.md.
 - Write only to: `docs/reviews/{slice-range}-eval-scenarios.md`, `docs/context.json`, `tests/slices/<slice>-eval.sh`.
@@ -183,12 +194,13 @@ Invoke skills with `$skill-name` in your prompt. Key skills:
 **Workflow commands** (invoke directly):
 - `$bridge-brainstorm` — Phase 0: brainstorm new project
 - `$bridge-scope` — Phase 0: scope feature/fix for existing project
-- `$bridge-requirements` — Phase 1: generate requirements (From Brainstorm or From Description mode)
+- `$bridge-requirements` — Phase 1: generate requirements (From Brainstorm, From Description or From Existing Code mode)
 - `$bridge-plan-feature` — Phase 1: incremental requirements for existing project
 - `$bridge-integrate-design` — Integrate a design document, PRD, or version spec
 - `$bridge-start` — Start implementation
 - `$bridge-resume` — Resume in fresh session
 - `$bridge-end` — End session
+- `$bridge-persist` — Save standing operator rules from this agent's memory into docs/bridge-memory.json
 - `$bridge-gate` — Run quality gate
 - `$bridge-eval` — Generate evaluation pack
 - `$bridge-feedback` — Process evaluation feedback
