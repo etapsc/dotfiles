@@ -9,8 +9,8 @@
 #   status       print the active flavour and every agent's current theme
 #
 # Alacritty picks the change up live via live_config_reload and Zellij (>= 0.42)
-# via its config watcher. The agent CLIs read their config at startup only, so a
-# running agent session keeps its old colours until you restart it.
+# via its config watcher. Restart existing agent sessions after editing their
+# config; Claude auto and Grok's Terminal theme can then follow terminal colors.
 #
 # AGENT NOTES
 #   claude  ~/.claude/settings.json  .theme
@@ -79,9 +79,25 @@ warn() { echo "theme-toggle: $*" >&2; }
 install_over() {
   local tmp="$1" target mode
   target="$(resolve "$2")"
-  mode="$(stat -f '%Lp' "$target" 2>/dev/null || stat -c '%a' "$target" 2>/dev/null || echo 644)"
-  chmod "$mode" "$tmp"
-  mv -f "$tmp" "$target"
+  # Keep each probe's stdout separate: GNU stat -f prints filesystem details
+  # before rejecting the BSD format argument, even though it exits nonzero.
+  if mode="$(stat -c '%a' "$target" 2>/dev/null)"; then
+    :
+  elif mode="$(stat -f '%Lp' "$target" 2>/dev/null)"; then
+    :
+  else
+    rm -f "$tmp"
+    warn "could not read permissions for $target — leaving it unchanged"
+    return 1
+  fi
+
+  # These functions run in conditionals, where Bash disables set -e. Check
+  # failures explicitly so a failed chmod can never be followed by a rename.
+  if ! chmod "$mode" "$tmp" || ! mv -f "$tmp" "$target"; then
+    rm -f "$tmp"
+    warn "could not replace $target — theme update failed"
+    return 1
+  fi
 }
 
 # stage_tmp <target> — a temp file in the target's directory.
@@ -188,33 +204,42 @@ grok_theme_for() {
 }
 
 apply_agents() {
-  local mode="$1" restart=()
+  local mode="$1" restart=() failed=0
 
   if [[ -f "$claude_cfg" ]]; then
-    json_set_theme "$claude_cfg" "$(claude_theme_for "$mode")" \
-      && echo "  claude: $(claude_theme_for "$mode")" \
-      && restart+=("claude")
+    if json_set_theme "$claude_cfg" "$(claude_theme_for "$mode")"; then
+      echo "  claude: $(claude_theme_for "$mode")"
+      restart+=("claude")
+    else
+      failed=1
+    fi
   fi
 
   if [[ -f "$codex_cfg" ]]; then
-    toml_set "$codex_cfg" "tui" "theme" "\"$(codex_theme_for "$mode")\"" \
-      && echo "  codex:  $(codex_theme_for "$mode")$([[ $mode == auto ]] && echo '  (no terminal-following mode; pinned to current flavour)')" \
-      && restart+=("codex")
+    if toml_set "$codex_cfg" "tui" "theme" "\"$(codex_theme_for "$mode")\""; then
+      echo "  codex:  $(codex_theme_for "$mode")$([[ $mode == auto ]] && echo '  (no terminal-following mode; pinned to current flavour)')"
+      restart+=("codex")
+    else
+      failed=1
+    fi
   fi
 
   if [[ -f "$grok_cfg" ]]; then
-    if [[ "$mode" == auto ]]; then
-      # The Terminal theme is still rollout-gated; enable it locally.
-      toml_set "$grok_cfg" "features" "terminal_theme" "true" || true
+    # The Terminal theme is still rollout-gated; enable it locally first.
+    if [[ "$mode" == auto ]] && ! toml_set "$grok_cfg" "features" "terminal_theme" "true"; then
+      failed=1
+    elif toml_set "$grok_cfg" "ui" "theme" "\"$(grok_theme_for "$mode")\""; then
+      echo "  grok:   $(grok_theme_for "$mode")"
+      restart+=("grok")
+    else
+      failed=1
     fi
-    toml_set "$grok_cfg" "ui" "theme" "\"$(grok_theme_for "$mode")\"" \
-      && echo "  grok:   $(grok_theme_for "$mode")" \
-      && restart+=("grok")
   fi
 
   if [[ ${#restart[@]} -gt 0 ]]; then
     echo "restart to pick it up: ${restart[*]}"
   fi
+  return "$failed"
 }
 
 apply() {

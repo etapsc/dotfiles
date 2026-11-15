@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+# claude-remote-control — turn Claude Code Remote Control on or off for every
+# new interactive session.
+#
+# Writes only remoteControlAtStartup in ~/.claude/settings.json, the same key
+# /config calls "Enable Remote Control for all sessions". Other keys in that
+# file are left alone. The file is not stow-managed.
+#
+# Usage: claude-remote-control [on|off|toggle|status|default]
+#   on, enable, true       auto-connect when a new session starts
+#   off, disable, false    do not auto-connect
+#   toggle                 flip; an unset key becomes on
+#   default                remove the key (follow Claude / org default)
+#   status                 print the current value
+#   (no argument)          status
+#
+# A session that is already open keeps its current connection. Start a new
+# claude to pick the change up. A managed true can still outrank a user false.
+# claude --remote-control still turns it on for one session when this key is false.
+set -euo pipefail
+
+file="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
+legacy="${CLAUDE_LEGACY_CONFIG:-$HOME/.claude.json}"
+key="remoteControlAtStartup"
+
+usage() {
+  cat <<'EOF'
+Usage: claude-remote-control [on|off|toggle|status|default]
+
+Turn Claude Code Remote Control on or off for every new interactive session
+by setting remoteControlAtStartup in ~/.claude/settings.json.
+
+  on, enable, true       auto-connect when a new session starts
+  off, disable, false    do not auto-connect
+  toggle                 flip; an unset key becomes on
+  default                remove the key (follow Claude / org default)
+  status                 print the current value
+  (no argument)          status
+
+Already-open sessions keep their current connection. Start a new claude
+to pick the change up.
+EOF
+}
+
+die() {
+  printf 'claude-remote-control: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve() {
+  readlink -f "$1" 2>/dev/null || echo "$1"
+}
+
+# ~/.claude holds credentials and history. Refuse to write a copy that lives
+# inside a git checkout (that is what stowing the directory would do).
+assert_not_in_git() {
+  local dir
+  dir="$(dirname "$1")"
+  if git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    die "refusing to edit $1 — it is inside a git checkout. ~/.claude must stay a real directory."
+  fi
+}
+
+need_jq() {
+  command -v jq >/dev/null 2>&1 || die "jq not found; install it to edit $file"
+}
+
+# Print true, false, unset, missing, invalid, or unreadable.
+current_value() {
+  local f="$1"
+  if [[ ! -e "$f" ]]; then
+    printf 'missing\n'
+    return 0
+  fi
+  if ! jq -r --arg k "$key" '
+    if has($k) then
+      if .[$k] == true then "true"
+      elif .[$k] == false then "false"
+      else "invalid"
+      end
+    else "unset"
+    end
+  ' "$f" 2>/dev/null; then
+    printf 'unreadable\n'
+  fi
+}
+
+warn_legacy() {
+  local v
+  [[ -e "$legacy" ]] || return 0
+  v="$(jq -r --arg k "$key" '
+    if has($k) then
+      if .[$k] == true then "true"
+      elif .[$k] == false then "false"
+      else "set"
+      end
+    else ""
+    end
+  ' "$legacy" 2>/dev/null || true)"
+  if [[ -n "$v" ]]; then
+    printf 'claude-remote-control: %s also has %s=%s; Claude Code still reads that older file.\n' \
+      "$legacy" "$key" "$v" >&2
+  fi
+}
+
+install_over() {
+  local tmp="$1" target mode
+  target="$(resolve "$2")"
+  mode="$(stat -c '%a' "$target" 2>/dev/null || stat -f '%Lp' "$target" 2>/dev/null || echo 600)"
+  chmod "$mode" "$tmp"
+  mv -f "$tmp" "$target"
+}
+
+write_value() {
+  # $1 is true, false, or delete.
+  local action="$1" existing tmp target
+  need_jq
+  if [[ -L "$HOME/.claude" && "$file" == "$HOME/.claude/settings.json" ]]; then
+    die "refusing to edit — ~/.claude is a symlink. It must stay a real directory."
+  fi
+
+  existing="$(current_value "$file")"
+  case "$existing" in
+    unreadable) die "$file does not parse as JSON; left untouched" ;;
+  esac
+  if [[ "$action" == "true" && "$existing" == "true" ]]; then
+    return 0
+  fi
+  if [[ "$action" == "false" && "$existing" == "false" ]]; then
+    return 0
+  fi
+  if [[ "$action" == "delete" && ( "$existing" == "unset" || "$existing" == "missing" ) ]]; then
+    return 0
+  fi
+
+  if [[ ! -e "$file" ]]; then
+    mkdir -p "$(dirname "$file")"
+    printf '{}\n' > "$file"
+    chmod 600 "$file"
+  fi
+  target="$(resolve "$file")"
+  assert_not_in_git "$target"
+
+  tmp="$(mktemp "$(dirname "$target")/.claude-remote-control.XXXXXX")"
+  if [[ "$action" == "delete" ]]; then
+    if ! jq --arg k "$key" 'del(.[$k])' "$target" > "$tmp"; then
+      rm -f "$tmp"
+      die "refusing to write $target — jq could not parse it"
+    fi
+  elif ! jq --arg k "$key" --argjson v "$action" '.[$k] = $v' "$target" > "$tmp"; then
+    rm -f "$tmp"
+    die "refusing to write $target — jq could not parse it"
+  fi
+  if ! jq -e . "$tmp" >/dev/null; then
+    rm -f "$tmp"
+    die "refusing to write $target — result is not JSON"
+  fi
+  install_over "$tmp" "$target"
+}
+
+print_status() {
+  local v
+  v="$(current_value "$file")"
+  case "$v" in
+    true) printf 'remoteControlAtStartup: true (new sessions auto-connect)\n' ;;
+    false) printf 'remoteControlAtStartup: false (new sessions do not auto-connect)\n' ;;
+    unset | missing) printf 'remoteControlAtStartup: unset (follow Claude / org default)\n' ;;
+    invalid) die "$file has $key set to a non-boolean; left untouched" ;;
+    unreadable) die "$file does not parse as JSON" ;;
+    *) die "could not read $key from $file" ;;
+  esac
+  warn_legacy
+}
+
+cmd="${1:-status}"
+case "$cmd" in
+  -h | --help) usage ;;
+  status) print_status ;;
+  on | enable | true) write_value true; print_status ;;
+  off | disable | false) write_value false; print_status ;;
+  default | unset) write_value delete; print_status ;;
+  toggle)
+    case "$(current_value "$file")" in
+      true) write_value false ;;
+      false | unset | missing) write_value true ;;
+      invalid) die "$file has $key set to a non-boolean; left untouched" ;;
+      unreadable) die "$file does not parse as JSON; left untouched" ;;
+      *) die "could not read $key from $file" ;;
+    esac
+    print_status
+    ;;
+  *)
+    printf 'claude-remote-control: unknown argument: %s\n' "$cmd" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

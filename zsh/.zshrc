@@ -202,3 +202,15 @@ autoload -Uz compinit && compinit -C
 # <<< grok installer <<<
 
 alias nv=nvim
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/alexey/.local/bin:$PATH"
+
+
+hash -d vault="$HOME/archive/SecondBrain"
+hash -d projects="$HOME/archive/SecondBrain/1. Projects"
+hash -d areas="$HOME/archive/SecondBrain/2. Areas"
+hash -d resources="$HOME/archive/SecondBrain/3. Resources"
+hash -d archive="$HOME/archive/SecondBrain/4. Archive"
+

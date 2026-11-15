@@ -98,8 +98,9 @@ theme-toggle status          # print the flavour and every agent's theme
 ```
 
 Alacritty reloads live via `live_config_reload` and Zellij (>= 0.42) via its
-config watcher. The agent CLIs read their config only at startup, so restart a
-running agent session to pick the change up.
+config watcher. Restart existing agent sessions after editing their config.
+Claude's auto mode and Grok's Terminal theme can then follow terminal colors;
+Codex may still need a restart when the terminal background changes.
 
 ### Agent support
 
@@ -125,7 +126,53 @@ flavour.
 Agent configs are not stow-managed, so `theme-toggle` edits them in place under
 `$HOME`. Each write is a single-key upsert, staged in a temp file and validated
 as JSON/TOML before it replaces the original; an unparseable result is refused
-and the existing file is left untouched.
+and the existing file is left untouched. Original file permissions are preserved.
+A failed write returns a nonzero status and is not reported as a successful
+agent update; other agent updates are still attempted.
+
+### Following Ubuntu appearance
+
+GNOME settings do not select the terminal palette. To connect a GNOME switcher
+to this command, add this at the end of its `set_theme()` function, after its
+already-matching/changed branches (the switcher provides `new_color_scheme`):
+
+```bash
+if [[ "$new_color_scheme" == "prefer-dark" ]]; then
+  "$HOME/.local/bin/theme-toggle" dark
+else
+  "$HOME/.local/bin/theme-toggle" light
+fi
+```
+
+The hook selects Latte for both GNOME `default` and `prefer-light`. It also runs
+when GNOME already matches, so mismatched terminal and agent settings can catch
+up. `theme-toggle auto` by itself only configures the agents; it does not watch
+GNOME. For Grok to follow the desktop directly instead, select `/theme auto`;
+on Linux it reads the XDG Desktop Portal appearance setting.
+
+## Remote Control
+
+`claude-remote-control` turns Claude Code Remote Control on or off for every
+new interactive session. It sets only `remoteControlAtStartup` in
+`~/.claude/settings.json` (the key `/config` calls **Enable Remote Control for
+all sessions**).
+
+```bash
+claude-remote-control            # print the current value
+claude-remote-control on         # new sessions auto-connect
+claude-remote-control off        # new sessions do not auto-connect
+claude-remote-control toggle     # flip; an unset key becomes on
+claude-remote-control default    # remove the key; follow Claude / org default
+```
+
+A session that is already open keeps its current connection; start a new
+`claude` to pick the change up. `off` writes an explicit `false`. A managed
+`true` can still outrank that. `claude --remote-control` still turns Remote
+Control on for one session.
+
+The command lives in the `scripts` stow package (`scripts/.local/bin` →
+`~/.local/bin`) and needs `jq`. It refuses to write the file when `~/.claude`
+is a symlink into a git checkout.
 
 ## Agent updates
 

@@ -1,6 +1,6 @@
 {
   "schema_version": "context.v1",
-  "updated": "2026-09-27",
+  "updated": "2026-10-23",
   "project": {
     "name": "dotfiles"
   },
@@ -10,11 +10,24 @@
     "repos": []
   },
   "feature_status": {},
-  "evidence": {},
+  "evidence": {
+    "S01": {
+      "delivery_status": "review",
+      "reproduction": "Before the fix, two isolated regression checks reproduced the three chmod errors and a zero exit status despite an invalid Claude JSON config.",
+      "verification_command": "bash tests/test-slice.sh S01",
+      "verification_result": "PASS: Bash/Python syntax, production-script ShellCheck, and eight regression tests. GNU stat exercised on Ubuntu; BSD stat fallback emulated, not run on macOS.",
+      "health_command": "bin/check-health.sh",
+      "health_result": "Exit 0; all reported checks OK.",
+      "gate_verdict": "not run",
+      "automated_evaluation": "not run",
+      "live_evaluation": "Pending operator verification of the terminal and existing agent sessions.",
+      "publication": "not requested"
+    }
+  },
   "workspace_feedback": [],
   "handoff": {
-    "stopped_at": "Cleared the stale handoff items from the previous session: deleted the two EXITED Zellij sessions (bridge, nvim) and the untracked alacritty.toml.9735f20a.bak leftover. Regenerated all old-format project layouts on this host (Mjolnir) with --force to the six-tab structure (10 layouts, all now match the dafd99d generator) and deleted the duplicate lumera-infra.kdl, which pointed at the same directory as lumera-deploy.kdl. Layouts are git-ignored, so no repo diff. Working tree clean at e21524b apart from this context refresh.",
-    "next_immediate": "Nothing queued. Optional follow-ups: delete the live `arc` Zellij session when convenient so it picks up its regenerated layout; remove the duplicate compinit call in zsh/.zshrc; restart Zellij so web_sharing \"off\" takes effect.",
+    "stopped_at": "S01 theme-toggle permission/failure fix is implemented and verified, awaiting operator review. The installed ~/.local/bin/theme-toggle is a symlink to the patched script. Actual agent configs were inspected through status only; theme-changing tests used a temporary HOME.",
+    "next_immediate": "Run theme-toggle light and theme-toggle dark; verify no chmod errors, live Alacritty/Zellij changes, and agent appearance after restarting sessions. Automatic GNOME linkage is documented in README but remains opt-in. Prior optional follow-ups: refresh the arc session layout when convenient, remove the duplicate compinit call, and restart Zellij for web_sharing off.",
     "watch_out": [
       "Zellij session `arc` is LIVE with running processes and still runs the OLD three-tab structure; delete it deliberately, not in bulk, to pick up the regenerated layout.",
       "Zellij web_sharing \"off\" (e21524b) only applies after a Zellij restart. On Mjolnir ~/.config/zellij is a directory symlink into the checkout, so a git pull there is enough before restarting.",
@@ -24,8 +37,8 @@
     ]
   },
   "next_slice": {
-    "slice_id": "",
-    "goal": "",
+    "slice_id": "S01",
+    "goal": "Operator review of theme-toggle permission preservation and failure reporting; GNOME integration guidance is available in README.",
     "features": [],
     "acceptance_tests": []
   },
@@ -37,6 +50,14 @@
   },
   "repo_commands": {},
   "repo_state": [
+    {
+      "date": "2026-10-23",
+      "summary": "S01 (review): fixed scripts/.local/bin/theme-toggle permission detection on GNU/BSD stat and explicit chmod/rename failure handling. Failed agent writes now return nonzero without a false success line; independent agent writes still run. Added eight isolated regression tests and per-slice verify/smoke runners. README documents an opt-in GNOME switcher hook; the system switcher and desktop preferences were not changed."
+    },
+    {
+      "date": "2026-09-29",
+      "summary": "scripts/.local/bin/claude-remote-control sets only remoteControlAtStartup in ~/.claude/settings.json (on/off/toggle/default/status) so new Claude Code interactive sessions auto-connect or not. The settings file stays out of stow. Needs jq."
+    },
     {
       "date": "2026-09-26",
       "summary": "e21524b: zellij/.config/zellij/config.kdl sets web_sharing \"off\"; sessions are no longer shared through the web server unless a session opts in. Web server setup and per-host service flags are unchanged."
@@ -63,6 +84,7 @@
     }
   ],
   "recent_decisions": [
+    "2026-09-29: Claude Code Remote Control auto-connect is a manual claude-remote-control command that sets only remoteControlAtStartup in ~/.claude/settings.json",
     "2026-09-26: Zellij web_sharing in the shared config.kdl is \"off\", superseding the \"on\" part of the 2026-08-26 web-access decision; web servers and per-host service flags unchanged",
     "2026-09-26: Agent CLI status lines are portable via an agent-cli stow package plus bin/setup-agent-statusline.sh, which upserts only the status line keys in the Claude/Grok/Codex configs (those configs are never stow-managed whole; --no-folding keeps ~/.claude and ~/.grok real directories)",
     "2026-08-26: Zellij web access uses the single shared config.kdl with host-specific settings passed as CLI flags in each host's service file; secrets live in ~/.config/lego/env, never in the repo",
