@@ -83,6 +83,34 @@ Generated project layouts set the Zellij session name to the layout name and rea
 
 Use `--force` to overwrite an existing layout.
 
+### Audit layouts
+
+Generate a layout for auditing several repositories at once. The script asks
+how many projects there are, then the path to each and a short label (Enter
+keeps the directory name). Each project gets an `<label> Auditor` and an
+`<label> Provider` tab, both opened in that repository; a final `Shell` tab
+opens in the projects' common parent directory. N projects give 2N+1 tabs.
+
+```bash
+./bin/new-zellij-audit-layout.sh --session Tools audit-tools
+zellij -l ~/.config/zellij/layouts/projects/audit-tools.kdl
+```
+
+Answers can be piped instead, one per line (count, then path and label for
+each project; an empty label keeps the directory name). The `// session:` and
+`// project:` header lines of an existing audit layout list the session name,
+labels and paths to reuse when regenerating it on another host:
+
+```bash
+printf '%s\n' 2 ~/work/sn-api-server snapi ~/work/lumescope '' |
+  ./bin/new-zellij-audit-layout.sh --force --session Tools audit-tools
+```
+
+The session is named after the layout unless `--session` names it. Like project
+layouts, audit layouts reattach to that session if it already exists, so delete
+an existing session of that name before its new tabs appear. Use `--force` to
+overwrite an existing layout.
+
 ## Theme
 
 `theme-toggle` switches the terminal (Alacritty + Zellij) and the three agent

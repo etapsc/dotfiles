@@ -1,6 +1,6 @@
 {
   "schema_version": "context.v1",
-  "updated": "2026-10-23",
+  "updated": "2026-11-25",
   "project": {
     "name": "dotfiles"
   },
@@ -22,13 +22,26 @@
       "automated_evaluation": "not run",
       "live_evaluation": "Pending operator verification of the terminal and existing agent sessions.",
       "publication": "not requested"
+    },
+    "S02": {
+      "delivery_status": "review",
+      "scope": "bin/new-zellij-audit-layout.sh (new, with --session), README 'Audit layouts' section, tests/test_audit_layout.py, tests/slices/S02-{verify,smoke}.sh; the three git-ignored audit-*.kdl layouts on Mjolnir regenerated with --force and sessions SDKs/Tools/Web (audit-tools labels snapi/scope/uploader from the operator's live session; the others use directory names).",
+      "verification_command": "bash tests/test-slice.sh S02",
+      "verification_result": "PASS: Bash/Python syntax, ShellCheck, and seven regression tests (2N+1 tab order and names, per-pair cwd, Shell at common parent, tilde expansion, --force guard, --session naming, eleven invalid-input cases, unsafe layout/session names and bad options). Re-prompting after invalid answers checked once under a pty (script -qc).",
+      "live_check": "Zellij 0.45.0 loaded a generated 2-project layout in a throwaway background session (attach -b ... options --default-layout); query-tab-names and dump-layout showed the 5 expected tabs and cwds; the probe session was removed; a later list-sessions showed no probe entry left. The real audit-*.kdl files were not launched. Not run on macOS; only this host's (Mjolnir) layouts were converted.",
+      "gate_verdict": "not run",
+      "automated_evaluation": "not run",
+      "live_evaluation": "Pending operator launch of the audit-* layouts.",
+      "publication": "not requested; uncommitted"
     }
   },
   "workspace_feedback": [],
   "handoff": {
-    "stopped_at": "S01 theme-toggle permission/failure fix is implemented and verified, awaiting operator review. The installed ~/.local/bin/theme-toggle is a symlink to the patched script. Actual agent configs were inspected through status only; theme-changing tests used a temporary HOME.",
-    "next_immediate": "Run theme-toggle light and theme-toggle dark; verify no chmod errors, live Alacritty/Zellij changes, and agent appearance after restarting sessions. Automatic GNOME linkage is documented in README but remains opt-in. Prior optional follow-ups: refresh the arc session layout when convenient, remove the duplicate compinit call, and restart Zellij for web_sharing off.",
+    "stopped_at": "S02 audit layout generator committed and awaiting operator review (not accepted, no gate). audit-sdks, audit-tools and audit-web were regenerated with sessions SDKs/Tools/Web from the code-reviews-{sdks,tools,web}.code-workspace folder lists in ~/raid/work/lumera. S01 theme-toggle remains in review.",
+    "next_immediate": "Review S02: launch audit-web.kdl and audit-tools.kdl (new Web/Tools sessions) and confirm tab names, cwd per pair and Shell location; audit-sdks.kdl reattaches the live SDKs session until it is retired. Then S01 live theme-toggle checks. Prior optional follow-ups: refresh the arc session layout when convenient, remove the duplicate compinit call, and restart Zellij for web_sharing off.",
     "watch_out": [
+      "Audit layouts now use sessions SDKs (audit-sdks.kdl), Tools (audit-tools.kdl) and Web (audit-web.kdl). The operator's hand-built live session `SDKs` (sdk pairs, no Shell tab) is reattached unchanged by audit-sdks.kdl until the operator retires it; deleting it kills its running processes. Expires once SDKs has been relaunched from the layout.",
+      "The operator's hand-built live session `audit-tools` (snapi/scope/uploader pairs, no Shell tab) is no longer referenced by any layout; audit-tools.kdl opens a new `Tools` session beside it. Expires when the operator retires the old audit-tools session.",
       "Zellij session `arc` is LIVE with running processes and still runs the OLD three-tab structure; delete it deliberately, not in bulk, to pick up the regenerated layout.",
       "Zellij web_sharing \"off\" (e21524b) only applies after a Zellij restart. On Mjolnir ~/.config/zellij is a directory symlink into the checkout, so a git pull there is enough before restarting.",
       "~/.claude/settings.json, ~/.grok/config.toml and ~/.codex/config.toml are NOT stow-managed; only the status line and theme keys are upserted by bin/setup-agent-statusline.sh and theme-toggle. Never stow those directories whole.",
@@ -37,8 +50,8 @@
     ]
   },
   "next_slice": {
-    "slice_id": "S01",
-    "goal": "Operator review of theme-toggle permission preservation and failure reporting; GNOME integration guidance is available in README.",
+    "slice_id": "S02",
+    "goal": "Operator review of the Zellij audit layout generator (Auditor/Provider tab pairs plus Shell) and the three converted audit-* layouts; S01 theme-toggle review is also outstanding.",
     "features": [],
     "acceptance_tests": []
   },
@@ -50,6 +63,10 @@
   },
   "repo_commands": {},
   "repo_state": [
+    {
+      "date": "2026-11-25",
+      "summary": "S02 (review): bin/new-zellij-audit-layout.sh [--force] [--session <session>] <name> asks for the project count, each path and an optional label, and writes layouts/projects/<name>.kdl with '<label> Auditor' and '<label> Provider' tabs per project (cwd = that repo) plus a final 'Shell' tab at the projects' common parent (2N+1 tabs); answers can be piped; the session defaults to the layout name. Inputs are allow-listed before they reach KDL strings. README documents it; seven regression tests and S02 verify/smoke runners added."
+    },
     {
       "date": "2026-10-23",
       "summary": "S01 (review): fixed scripts/.local/bin/theme-toggle permission detection on GNU/BSD stat and explicit chmod/rename failure handling. Failed agent writes now return nonzero without a false success line; independent agent writes still run. Added eight isolated regression tests and per-slice verify/smoke runners. README documents an opt-in GNOME switcher hook; the system switcher and desktop preferences were not changed."
@@ -84,12 +101,11 @@
     }
   ],
   "recent_decisions": [
+    "2026-11-25: Audit layouts come from a separate generator (bin/new-zellij-audit-layout.sh) with per-project Auditor/Provider tab pairs plus one Shell tab at the projects' common parent; the audit-* layouts use sessions SDKs, Tools and Web",
     "2026-09-29: Claude Code Remote Control auto-connect is a manual claude-remote-control command that sets only remoteControlAtStartup in ~/.claude/settings.json",
     "2026-09-26: Zellij web_sharing in the shared config.kdl is \"off\", superseding the \"on\" part of the 2026-08-26 web-access decision; web servers and per-host service flags unchanged",
     "2026-09-26: Agent CLI status lines are portable via an agent-cli stow package plus bin/setup-agent-statusline.sh, which upserts only the status line keys in the Claude/Grok/Codex configs (those configs are never stow-managed whole; --no-folding keeps ~/.claude and ~/.grok real directories)",
-    "2026-08-26: Zellij web access uses the single shared config.kdl with host-specific settings passed as CLI flags in each host's service file; secrets live in ~/.config/lego/env, never in the repo",
-    "2026-07-21: Project layout scaffolds use six role-specific tabs: claude, codex, grok, code, tools, and shell; agent tabs stay as plain shells rather than auto-launching CLIs",
-    "2026-07-04: Theme switching is a manual toggle command, not OS-appearance- or schedule-driven (user explicitly rejected following desktop mode)"
+    "2026-08-26: Zellij web access uses the single shared config.kdl with host-specific settings passed as CLI flags in each host's service file; secrets live in ~/.config/lego/env, never in the repo"
   ],
   "feedback_history": [
     {
