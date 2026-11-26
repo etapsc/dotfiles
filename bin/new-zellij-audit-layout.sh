@@ -7,10 +7,11 @@ Usage: new-zellij-audit-layout.sh [--force] [--session <session>] <name>
 
 Asks how many projects to audit, then the path to each project and a short
 label for it (press Enter to use the directory name). Writes
-zellij/.config/zellij/layouts/projects/<name>.kdl with two tabs per project,
-"<label> Auditor" and "<label> Provider", both opened in that project's
-directory, followed by a final "Shell" tab opened in the projects' common
-parent directory. N projects give 2N+1 tabs.
+zellij/.config/zellij/layouts/projects/<name>.kdl with three tabs per
+project, all opened in that project's directory: "<label> Auditor",
+"<label> Provider", and "<label> other" split into two side-by-side panes.
+A final "Shell" tab opens in the projects' common parent directory.
+N projects give 3N+1 tabs.
 
 The Zellij session is named after the layout unless --session gives another
 name; the layout reattaches to that session if it already exists.
@@ -216,6 +217,10 @@ EOF
     fi
     printf '    tab name="%s Auditor" cwd="%s"%s\n' "${labels[i]}" "${paths[i]}" "$focus"
     printf '    tab name="%s Provider" cwd="%s"\n' "${labels[i]}" "${paths[i]}"
+    printf '    tab name="%s other" cwd="%s" split_direction="vertical" {\n' "${labels[i]}" "${paths[i]}"
+    printf '        pane size="50%%"\n'
+    printf '        pane size="50%%"\n'
+    printf '    }\n'
   done
   cat <<EOF
     tab name="Shell"
@@ -225,5 +230,5 @@ attach_to_session true
 EOF
 } >"$target_file"
 
-printf 'created: %s (%d tabs, session %s)\n' "$target_file" $(( count * 2 + 1 )) "$session"
+printf 'created: %s (%d tabs, session %s)\n' "$target_file" $(( count * 3 + 1 )) "$session"
 printf 'use with: zellij -l ~/.config/zellij/layouts/projects/%s.kdl\n' "$name"

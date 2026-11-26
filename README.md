@@ -87,9 +87,11 @@ Use `--force` to overwrite an existing layout.
 
 Generate a layout for auditing several repositories at once. The script asks
 how many projects there are, then the path to each and a short label (Enter
-keeps the directory name). Each project gets an `<label> Auditor` and an
-`<label> Provider` tab, both opened in that repository; a final `Shell` tab
-opens in the projects' common parent directory. N projects give 2N+1 tabs.
+keeps the directory name). Each project gets three tabs opened in that
+repository: `<label> Auditor`, `<label> Provider`, and `<label> other` split
+into two side-by-side panes (a shell plus room for another agent). A final
+`Shell` tab opens in the projects' common parent directory. N projects give
+3N+1 tabs.
 
 ```bash
 ./bin/new-zellij-audit-layout.sh --session Tools audit-tools

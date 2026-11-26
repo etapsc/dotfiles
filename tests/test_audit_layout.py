@@ -11,7 +11,19 @@ import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "bin/new-zellij-audit-layout.sh"
-TAB = re.compile(r'^    tab name="([^"]*)"(?: cwd="([^"]*)")?( focus=true)?$')
+TAB = re.compile(
+    r'^    tab name="([^"]*)"(?: cwd="([^"]*)")?(?: (focus=true|split_direction="vertical" \{))?$'
+)
+FOCUS, SPLIT = "focus=true", 'split_direction="vertical" {'
+
+
+def other_tab(label, cwd):
+    return (
+        f'    tab name="{label} other" cwd="{cwd}" split_direction="vertical" {{\n'
+        '        pane size="50%"\n'
+        '        pane size="50%"\n'
+        "    }\n"
+    )
 
 
 class AuditLayoutTests(unittest.TestCase):
@@ -46,26 +58,32 @@ class AuditLayoutTests(unittest.TestCase):
         text = (self.layouts / f"{name}.kdl").read_text()
         return [m.groups() for m in map(TAB.match, text.splitlines()) if m], text
 
-    def test_three_projects_give_seven_tabs_in_pairs_plus_shell(self):
+    def test_three_projects_give_ten_tabs_in_triples_plus_shell(self):
         snapi, scope, uploader = (str(self.repos[n]) for n in self.repos)
         result = self.run_script(
             ["3", snapi, "snapi", scope, "", uploader, ""], "audit-tools"
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("(7 tabs, session audit-tools)", result.stdout)
+        self.assertIn("(10 tabs, session audit-tools)", result.stdout)
         tabs, text = self.tabs("audit-tools")
         self.assertEqual(
             tabs,
             [
-                ("snapi Auditor", snapi, " focus=true"),
+                ("snapi Auditor", snapi, FOCUS),
                 ("snapi Provider", snapi, None),
+                ("snapi other", snapi, SPLIT),
                 ("lumescope Auditor", scope, None),
                 ("lumescope Provider", scope, None),
+                ("lumescope other", scope, SPLIT),
                 ("lumera-uploader Auditor", uploader, None),
                 ("lumera-uploader Provider", uploader, None),
+                ("lumera-uploader other", uploader, SPLIT),
                 ("Shell", None, None),
             ],
         )
+        for label, cwd in (("snapi", snapi), ("lumescope", scope), ("lumera-uploader", uploader)):
+            self.assertIn(other_tab(label, cwd), text)
+        self.assertEqual(text.count("        pane size=\"50%\"\n"), 6)
         self.assertIn(f'    cwd "{self.work}"\n', text)
         self.assertIn(f"// shell: {self.work}\n", text)
         self.assertIn(f"// project: snapi {snapi}\n", text)
@@ -81,8 +99,9 @@ class AuditLayoutTests(unittest.TestCase):
         self.assertEqual(
             tabs,
             [
-                ("lumescope Auditor", scope, " focus=true"),
+                ("lumescope Auditor", scope, FOCUS),
                 ("lumescope Provider", scope, None),
+                ("lumescope other", scope, SPLIT),
                 ("Shell", None, None),
             ],
         )
@@ -109,7 +128,7 @@ class AuditLayoutTests(unittest.TestCase):
         self.assertEqual(target.read_text(), "old layout\n")
         forced = self.run_script(answers, "--force", "audit-web")
         self.assertEqual(forced.returncode, 0, forced.stderr)
-        self.assertEqual(len(self.tabs("audit-web")[0]), 3)
+        self.assertEqual(len(self.tabs("audit-web")[0]), 4)
 
     def test_invalid_answers_are_refused_without_writing_a_layout(self):
         scope = str(self.repos["lumescope"])

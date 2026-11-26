@@ -7,7 +7,7 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 source .bridge/lib/runner-lib.sh
 
 # >>> BRIDGE slice S02 producer (managed) >>>
-bridge_run "Audit layouts have Auditor/Provider pairs plus Shell and refuse unsafe input" python3 tests/test_audit_layout.py
+bridge_run "Audit layouts have Auditor/Provider/other tabs per project plus Shell and refuse unsafe input" python3 tests/test_audit_layout.py
 # <<< BRIDGE slice S02 producer (managed) <<<
 
 # >>> BRIDGE slice S02 gate (managed) >>>
